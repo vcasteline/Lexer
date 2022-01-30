@@ -8,6 +8,7 @@ import java.util.Scanner;
 public class Lexer implements ILexer {
     ArrayList<Token> tokens = new ArrayList<Token>();
     int currentToken = -1;
+    int indentCheck = 0;
     public Lexer(String input){
         ArrayList<String> lines = new ArrayList<String>();
         Scanner scan =new Scanner(input);
@@ -26,25 +27,31 @@ public class Lexer implements ILexer {
 
                 char candidate = line.charAt(j);
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
-                if (letterOrDigit == false && candidate != ' ' && candidate != '\"') {
+                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#') {
                     if(stringInput.isEmpty())
                     {
-                    tokens.add(new Token(String.valueOf(candidate), i, j)); //Add token if input is not a number/letter
+                    tokens.add(new Token(String.valueOf(candidate), i, 0)); //Add token if input is not a number/letter
                     }
                     else {
-                        tokens.add(new Token(stringInput, i, j)); //Send stringInput as a token
+                        tokens.add(new Token(stringInput, i, 0)); //Send stringInput as a token
                         stringInput = ""; //Flush string input
-                        tokens.add(new Token(String.valueOf(candidate), i, j)); //send non letter/number as a token
+                        tokens.add(new Token(String.valueOf(candidate), i, 0)); //send non letter/number as a token
                     }
 
                 }
                 else {
                     stringInput = stringInput + candidate;
-                    if(j == lineSize-1)
-                    {
-                        tokens.add(new Token(stringInput, i, j)); //If we get to the end of line, send stringInput as a token
-                        stringInput = "";
-                    }
+                    //if(candidate!=' '){
+                        if(j == lineSize-1)
+                        {
+                            if (stringInput.charAt(0) != '#') {
+                                tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
+                            }
+                            stringInput="";
+
+                        }
+                    //}
+
                 }
 
             }
