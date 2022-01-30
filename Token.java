@@ -141,6 +141,7 @@ public class Token implements IToken {
         System.out.println("input:"+ input);
         System.out.println("line"+ line);
         System.out.println("col"+ col);
+
     }
     //returns the token kind
 	public Kind getKind(){
