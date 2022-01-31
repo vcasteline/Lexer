@@ -18,7 +18,7 @@ public class Lexer implements ILexer {
         }
 
         String stringInput = "";
-        System.out.println(lines.size());
+        System.out.println("Lines: " + lines.size());
 
         for(int i=0; i< lines.size(); i++){//Loops through line array
             String line = lines.get(i);
@@ -27,7 +27,7 @@ public class Lexer implements ILexer {
 
                 char candidate = line.charAt(j);
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
-                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#') {
+                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#') {//Letter, numbers, spaces, and # do not enter here
                     if(stringInput.isEmpty())
                     {
                     tokens.add(new Token(String.valueOf(candidate), i, 0)); //Add token if input is not a number/letter
@@ -40,8 +40,7 @@ public class Lexer implements ILexer {
 
                 }
                 else {
-                    stringInput = stringInput + candidate;
-                    //if(candidate!=' '){
+                    stringInput = stringInput + candidate;//Add candidate to string
                         if(j == lineSize-1)
                         {
                             if (stringInput.charAt(0) != '#') {
@@ -50,16 +49,18 @@ public class Lexer implements ILexer {
                             stringInput="";
 
                         }
-                    //}
-
                 }
 
             }
         }
         tokens.add(new Token("EOF", 0, 0));
     }
-    public IToken next(){
+    public IToken next() throws LexicalException {
         currentToken++;
+        if(tokens.get(currentToken).checkError() == true)//Check if token is an error
+        {
+            throw new LexicalException("Error");
+        }
         return tokens.get(currentToken);
 
     }

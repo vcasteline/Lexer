@@ -2,20 +2,33 @@ package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.IToken;
 
+import java.util.ArrayList;
+
 public class Token implements IToken {
     Kind kind;
     char token;
     String input;
-    int line;
-    int col;
+    int line = 0;
+    int col = 0;
+    ArrayList<String> protectedWords = new ArrayList<String>();
+
     public Token(String input, int line, int col){
+        populateProtected();
+        input = clearWhiteSpace(input);
+        this.input = input;
+
+
         if(input.charAt(0) == '\"'){
             kind = Kind.STRING_LIT;
         }
-        else {
+        else if(input.charAt(0) == '$' || input.charAt(0) == '_' || //If input starts with a $ or _
+                (Character.isLetter(input.charAt(0)) == true && checkProtected(input) == false))//If input starts with a letter and is not a protected word
+        {
+            kind = Kind.IDENT;
+        }
+        else
+        {
             switch (input) {
-                 case "    ":
-                     kind = Kind.IDENT;
                 // case INT_LIT:
                 //     kind = Kind.INT_LIT;
                 // case FLOAT_LIT:
@@ -136,16 +149,17 @@ public class Token implements IToken {
                 case "EOF":
                     kind = Kind.EOF; // used as sentinal, does not correspond to input
                     break;
-                default:
+                 default:
                     kind = Kind.ERROR; // use to avoid exceptions if scanning all input at once
+
 
             }
         }
         this.line = line;
-        this.col = col;
         System.out.println("input:"+ input);
-        System.out.println("line"+ line);
-        System.out.println("col"+ col);
+        System.out.println("line:"+ line);
+        System.out.println("col:"+ col);
+        System.out.println("token:" + kind);
 
     }
     //returns the token kind
@@ -186,5 +200,40 @@ public class Token implements IToken {
 	public String getStringValue(){
         return "hello";
     };
+
+    public boolean checkError(){//Used by Lexer.  Only Lexer can throw errors, so it needs to check if the token is an error
+        if(kind == Kind.ERROR){
+            return true;
+        }
+        else
+            return false;
+    }
+
+    String clearWhiteSpace(String candidate){//This function erases whitespace from the beginning of a string and updates col
+        //String newString = candidate;
+
+        while(candidate.charAt(0) == ' ')
+        {
+            col += 1;
+            candidate = candidate.substring(1);
+        }
+        return candidate;
+    }
+
+    void populateProtected(){//Add protected words to the 'protected' array
+        protectedWords.add("EOF");
+        protectedWords.add("True");
+        protectedWords.add("False");
+    }
+
+    boolean checkProtected(String candidate){//Use this function to check if a string is a protected word
+        for(int i = 0; i < protectedWords.size(); ++i)
+        {
+            if(candidate.equals(protectedWords.get(i)) == true){
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
