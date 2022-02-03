@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 public class Lexer implements ILexer {
     ArrayList<Token> tokens = new ArrayList<Token>();
+    char[] Symbols = {'=', '<', '>', '!', '-'};
     int currentToken = -1;
     int indentCheck = 0;
     public Lexer(String input){
@@ -21,9 +22,9 @@ public class Lexer implements ILexer {
 //        System.out.println("Lines: " + lines.size());
 
         for(int i=0; i< lines.size(); i++){//Loops through line array
-            boolean wasEqualsSign = false;
+            boolean wasSymbol = false;
             String line = lines.get(i);
-            System.out.println("I'm here!" + i);
+            //System.out.println("I'm here!" + i);
 
             if(line.length() == 0) {
                 break;
@@ -33,17 +34,21 @@ public class Lexer implements ILexer {
             for(int j = 0; j < lineSize; ++j) {//Iterates through individual strings
 
 
+
                 char candidate = line.charAt(j);
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
-                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && candidate != '=' && candidate!='_') {//Letter, numbers, spaces, and # do not enter here
-                    if(stringInput.isEmpty())
+                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && !isSymbol(candidate) && candidate!='_') {//Letter, numbers, spaces, and # do not enter here
+                   System.out.println("checkMod: " + candidate);
+                    if(spaceCheck(stringInput) == true || stringInput.isEmpty())
                     {
+                        System.out.println("checkModTop: " + candidate);
                     tokens.add(new Token(String.valueOf(candidate), i, j)); //Add token if input is not a number/letter
                     }
                     else {
+                        System.out.println("checkModBottom: " + candidate);
                         tokens.add(new Token(stringInput, i, j)); //Send stringInput as a token
-                        stringInput = ""; //Flush string input
+                        spaceReplace(stringInput); //Flush string input
                         tokens.add(new Token(String.valueOf(candidate), i, j)); //send non letter/number as a token
                     }
 
@@ -52,37 +57,70 @@ public class Lexer implements ILexer {
 
 
 
-                    if(candidate == '=' && j == lineSize-1) {//IF END OF LINE AND CANDIDATE IS '='
+//                    if(candidate == '=' && j == lineSize-1) {//IF END OF LINE AND CANDIDATE IS '='
+//                        stringInput =  stringInput + candidate;
+//                    }
+//                    else if (candidate == '=')
+//                    {
+//                        if(line.charAt(j+1) == '=') {
+//                           stringInput =  stringInput + candidate + candidate;
+//
+//                            tokens.add(new Token(stringInput, i, 0)); //If stringInput is ==, send it as token
+//                            j += 1;
+//                            stringInput = spaceReplace(stringInput);
+//                            wasSymbol = true;
+//                        }
+//                        else
+//                        {
+//                            stringInput = stringInput + candidate;
+//                            tokens.add(new Token(stringInput, i, 0));
+//                           // candidate = ' ';
+//                            stringInput = spaceReplace(stringInput);
+//                            wasSymbol = true;
+//
+//                        }
+//                    }
+
+
+                    if(isSymbol(candidate) && j == lineSize-1) {//IF END OF LINE AND CANDIDATE IS Symbol
                         stringInput =  stringInput + candidate;
+                        tokens.add(new Token(stringInput, i, 0));
+                        stringInput = "";
                     }
-                    else if (candidate == '=')
+                    else if (isSymbol(candidate))
                     {
-                        if(line.charAt(j+1) == '=') {
-                           stringInput =  stringInput + candidate + candidate;
+                        if(isSymbol(line.charAt(j+1))) {
+                            stringInput =  stringInput + candidate + line.charAt(j+1);
 
                             tokens.add(new Token(stringInput, i, 0)); //If stringInput is ==, send it as token
+
+
                             j += 1;
+
+
                             stringInput = spaceReplace(stringInput);
-                            wasEqualsSign = true;
+                            wasSymbol = true;
+                            System.out.println("checkSpace: " + candidate);
+
                         }
                         else
                         {
                             stringInput = stringInput + candidate;
                             tokens.add(new Token(stringInput, i, 0));
-                           // candidate = ' ';
+                            // candidate = ' ';
                             stringInput = spaceReplace(stringInput);
-                            wasEqualsSign = true;
+                            wasSymbol = true;
 
                         }
                     }
+                    
+                    
 
 
-
-
-                    if((candidate == ' ' && line.charAt(0) != '#' && line.charAt(0) != '\"' && wasEqualsSign == false && spaceCheck(stringInput) == false) ||
-                            (intLit == true && Character.isLetter(candidate) == true && candidate != '='))
+                    if((candidate == ' ' && line.charAt(0) != '#' && line.charAt(0) != '\"' && wasSymbol == false && spaceCheck(stringInput) == false) ||
+                            (intLit == true && Character.isLetter(candidate) == true && isSymbol(candidate) == false))
                     {
-                        System.out.println("I'm here! " + wasEqualsSign);
+                        System.out.println("I'm here! " + wasSymbol);
                         tokens.add(new Token(stringInput, i, 0));
                         stringInput = spaceReplace(stringInput);
                         stringInput = stringInput + candidate;
@@ -92,16 +130,16 @@ public class Lexer implements ILexer {
                         }
 
                     }
-                    else if(candidate != '=') {
+                    else if(isSymbol(candidate) == false) {
                         stringInput = stringInput + candidate;//Add candidate to string
-                        wasEqualsSign = false;
+                        wasSymbol = false;
 
                     }
 
 
-                        if(j == lineSize-1 && stringInput.isEmpty() == false)//we ARE ate the end of line
+                        if(j == lineSize-1 && stringInput.isEmpty() == false)//we ARE at the end of line and NOT a symbol
                         {
-                            if (stringInput.charAt(0) != '#') {
+                            if (stringInput.charAt(0) != '#' && !isSymbol(candidate)) {
                                 tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
                             }
                             stringInput="";
@@ -148,4 +186,19 @@ public class Lexer implements ILexer {
         }
         return allSpaces;
     }
+    
+    /////////SYMBOL HELPER FUNCTIONS//////////////////
+    public boolean isSymbol(char candidate)
+    {
+        for(int i = 0; i < Symbols.length; ++i)
+        {
+            if(candidate == Symbols[i])
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 }
