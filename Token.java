@@ -39,12 +39,35 @@ public class Token implements IToken {
                         kind = Kind.FLOAT_LIT;
                     }
                     else {
-                        kind = Kind.INT_LIT;
-                        //System.out.println("Input: " + input);
-                        returnInt = Integer.parseInt(input);
+                        if (input.length() > 10) {
+                            kind = Kind.ERROR;
+                        }
+
+                        else {
+                            kind = Kind.INT_LIT;
+                            //System.out.println("Input: " + input);
+                            returnInt = Integer.parseInt(input);
+                        }
                     }
                 }
             }
+        }
+
+        else if(input.equals("int") || input.equals("float") || input.equals("string") || input.equals("boolean") || input.equals("color") || input.equals("image"))
+        {
+            kind = Kind.TYPE;
+        }
+        else if(input.equals("BLUE") || input.equals("CYAN") || input.equals("GRAY") || input.equals("DARK_GRAY") || input.equals("GREEN") || input.equals("LIGHT_GRAY") || input.equals("MAGENTA") || input.equals("ORANGE") || input.equals("PINK"))
+        {
+            kind = Kind.COLOR_CONST;
+        }
+        else if(input.equals("getRed") || input.equals("getBlue") || input.equals("getBlue"))
+        {
+            kind = Kind.COLOR_OP;
+        }
+        else if(input.equals("getWidth") || input.equals("getHeight"))
+        {
+            kind = Kind.IMAGE_OP;
         }
         else
         {
@@ -94,9 +117,9 @@ public class Token implements IToken {
                 case "%":
                     kind = Kind.MOD;  // '%'
                     break;
-                // case "COLOR_CONST":
-                //     kind = Kind.COLOR_CONST; // 'BLACK','BLUE','CYAN','DARK_GRAY','GRAY','GREEN','LIGHT_GRAY','MAGENTA','ORANGE','PINK',
-                //             // 'RED','WHITE','YELLOW'
+                 //case "COLOR_CONST":
+                     //kind = Kind.COLOR_CONST; // 'BLACK','BLUE','CYAN','DARK_GRAY','GRAY','GREEN','LIGHT_GRAY','MAGENTA','ORANGE','PINK',
+                             // 'RED','WHITE','YELLOW'
                 case "if":
                     kind = Kind.KW_IF; // 'if'
                     break;
@@ -139,8 +162,8 @@ public class Token implements IToken {
                 case ">=":
                     kind = Kind.GE; //  '>='
                     break;
-                // case "TYPE":
-                //     kind = Kind.TYPE; //int, float, string, boolean, color, image
+                 //case "TYPE":
+                   //  kind = Kind.TYPE; //int, float, string, boolean, color, image
                 // case COLOR_OP:
                 //     kind = Kind.COLOR_OP; //getRed, getGreen, getBlue
                 // case IMAGE_OP:
@@ -177,8 +200,8 @@ public class Token implements IToken {
         }
         this.line = line;
         System.out.println("input:"+ input);
-        System.out.println("line:"+ line);
-        System.out.println("col:"+ col);
+        System.out.println("line:"+ this.line);
+        System.out.println("col:"+ this.col);
         System.out.println("token:" + kind);
 
     }
