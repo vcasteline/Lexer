@@ -27,7 +27,8 @@ public class Lexer implements ILexer {
 
                 char candidate = line.charAt(j);
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
-                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#') {//Letter, numbers, spaces, and # do not enter here
+
+                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && candidate != '=') {//Letter, numbers, spaces, and # do not enter here
                     if(stringInput.isEmpty())
                     {
                     tokens.add(new Token(String.valueOf(candidate), i, 0)); //Add token if input is not a number/letter
@@ -40,8 +41,35 @@ public class Lexer implements ILexer {
 
                 }
                 else {
+
+
+
+                    if(candidate == '=' && j == lineSize-1) {//IF END OF LINE AND CANDIDATE IS '='
+                        //Do Nothing
+                    }
+                    else if (candidate == '=')
+                    {
+                        if(line.charAt(j+1) == '=') {
+                            String tempString = stringInput;
+                            tempString = tempString + "==";
+                            tokens.add(new Token(tempString, i, 0)); //If stringInput is ==, send it as token
+                            j += 1;
+                            candidate = ' ';
+                            stringInput = stringInput + candidate;
+
+                        }
+                        else
+                        {
+                            String tempString = stringInput;
+                            tempString = tempString + candidate;
+                            tokens.add(new Token(tempString, i, 0));
+                            candidate = ' ';
+                        }
+                    }
+
                     stringInput = stringInput + candidate;//Add candidate to string
-                        if(j == lineSize-1)
+
+                        if(j == lineSize-1 && stringInput.isEmpty() == false)
                         {
                             if (stringInput.charAt(0) != '#') {
                                 tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
