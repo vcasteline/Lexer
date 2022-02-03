@@ -10,6 +10,7 @@ public class Token implements IToken {
     String input;
     int line = 0;
     int col = 0;
+    int returnInt = 0;
     ArrayList<String> protectedWords = new ArrayList<String>();
 
     public Token(String input, int line, int col){
@@ -25,6 +26,25 @@ public class Token implements IToken {
                 (Character.isLetter(input.charAt(0)) == true && checkProtected(input) == false))//If input starts with a letter and is not a protected word
         {
             kind = Kind.IDENT;
+        }
+        else if(Character.isDigit(input.charAt(0)))
+        {
+            if(input.length() > 1 && input.charAt(0) == 0) {
+                kind = Kind.ERROR;
+            }
+            else
+            {
+                for(int i = 0; i < input.length(); ++i) {
+                    if (input.charAt(i) == '.') {
+                        kind = Kind.FLOAT_LIT;
+                    }
+                    else {
+                        kind = Kind.INT_LIT;
+                        //System.out.println("Input: " + input);
+                        returnInt = Integer.parseInt(input);
+                    }
+                }
+            }
         }
         else
         {
@@ -182,7 +202,7 @@ public class Token implements IToken {
 
 	//returns the int value represented by the characters of this token if kind is INT_LIT
 	public int getIntValue(){
-        return 0;
+        return returnInt;
     };
 
 	//returns the float value represented by the characters of this token if kind is FLOAT_LIT

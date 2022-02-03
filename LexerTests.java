@@ -133,7 +133,7 @@ public class LexerTests {
 				abc
 				  def
 				     ghi
-
+				     
 				""";
 		show(input);
 		ILexer lexer = getLexer(input);
