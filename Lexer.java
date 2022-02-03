@@ -18,7 +18,7 @@ public class Lexer implements ILexer {
         }
 
         String stringInput = "";
-        System.out.println("Lines: " + lines.size());
+//        System.out.println("Lines: " + lines.size());
 
         for(int i=0; i< lines.size(); i++){//Loops through line array
             boolean wasEqualsSign = false;
@@ -36,7 +36,7 @@ public class Lexer implements ILexer {
                 char candidate = line.charAt(j);
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
-                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && candidate != '=') {//Letter, numbers, spaces, and # do not enter here
+                if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && candidate != '=' && candidate!='_') {//Letter, numbers, spaces, and # do not enter here
                     if(stringInput.isEmpty())
                     {
                     tokens.add(new Token(String.valueOf(candidate), i, j)); //Add token if input is not a number/letter

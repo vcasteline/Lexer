@@ -37,6 +37,11 @@ public class LexerTests {
 		assertEquals(expectedKind, t.getKind());
 		assertEquals(new IToken.SourceLocation(expectedLine,expectedColumn), t.getSourceLocation());
 	}
+	void checkToken(IToken t, Kind expectedKind, int expectedLine, int expectedColumn, String expectedText){
+		assertEquals(expectedKind, t.getKind());
+		assertEquals(expectedText, t.getText());
+		assertEquals(new IToken.SourceLocation(expectedLine,expectedColumn), t.getSourceLocation());
+	}
 	
 	//check that this token is an IDENT and has the expected name
 	void checkIdent(IToken t, String expectedName){
@@ -185,5 +190,139 @@ public class LexerTests {
 			lexer.next();			
 		});
 	}
+	@Test
+	void testAllSymbolTokens() throws LexicalException {
+		String input = """
+			&
+			|
+			/
+			*
+			+
+			(
+			)
+			[
+			]
+			!=
+			==
+			>=
+			<=
+			>>
+			<<
+			<-
+			->
+			%
+			^
+			,
+			;
+			!
+			=
+			-
+			<
+			>	 
+			""";
+		show(input);
+		ILexer lexer = getLexer(input);
+		checkToken(lexer.next(), Kind.AND,		0, 0);
+		checkToken(lexer.next(), Kind.OR,		1, 0);
+		checkToken(lexer.next(), Kind.DIV,		2, 0);
+		checkToken(lexer.next(), Kind.TIMES,	3, 0);
+		checkToken(lexer.next(), Kind.PLUS,		4, 0);
+		checkToken(lexer.next(), Kind.LPAREN,	5, 0);
+		checkToken(lexer.next(), Kind.RPAREN,	6, 0);
+		checkToken(lexer.next(), Kind.LSQUARE,    7, 0);
+		checkToken(lexer.next(), Kind.RSQUARE,	8, 0);
+		checkToken(lexer.next(), Kind.NOT_EQUALS,	9, 0);
+		checkToken(lexer.next(), Kind.EQUALS,    	10, 0);
+		checkToken(lexer.next(), Kind.GE,         11, 0);
+		checkToken(lexer.next(), Kind.LE,         12, 0);
+		checkToken(lexer.next(), Kind.RANGLE,     13, 0);
+		checkToken(lexer.next(), Kind.LANGLE,     14, 0);
+		checkToken(lexer.next(), Kind.LARROW,     15, 0);
+		checkToken(lexer.next(), Kind.RARROW,     16, 0);
+		checkToken(lexer.next(), Kind.MOD,        17, 0);
+		checkToken(lexer.next(), Kind.RETURN,     18, 0);
+		checkToken(lexer.next(), Kind.COMMA,      19, 0);
+		checkToken(lexer.next(), Kind.SEMI,       20, 0);
+		checkToken(lexer.next(), Kind.BANG,       21, 0);
+		checkToken(lexer.next(), Kind.ASSIGN,     22, 0);
+		checkToken(lexer.next(), Kind.MINUS,      23, 0);
+		checkToken(lexer.next(), Kind.LT,		24, 0);
+		checkToken(lexer.next(), Kind.GT,		25, 0);
+		checkEOF(lexer.next());
+	}
+	@Test
+	void testReservedWords() throws LexicalException {
+		String input = """
+			string CYAN
+			int
+			float
+			boolean
+			color
+			image
+			void
+			getWidth
+			getHeight
+			getRed
+			getGreen
+			getBlue
+			BLACK
+			BLUE
+			CYAN
+			DARK_GRAY
+			GRAY
+			GREEN
+			LIGHT_GRAY
+			MAGENTA
+			ORANGE
+			PINK
+			RED
+			WHITE
+			YELLOW
+			true
+			false
+			if
+			else
+			fi
+			write
+			console	 
+			""";
+		show(input);
+		ILexer lexer = getLexer(input);
+		checkToken(lexer.next(), Kind.TYPE,		    0, 0, "string");
+		checkToken(lexer.next(), Kind.COLOR_CONST,    0, 7, "CYAN");
+		checkToken(lexer.next(), Kind.TYPE,		    1, 0, "int");
+		checkToken(lexer.next(), Kind.TYPE,		    2, 0, "float");
+		checkToken(lexer.next(), Kind.TYPE,		    3, 0, "boolean");
+		checkToken(lexer.next(), Kind.TYPE,		    4, 0, "color");
+		checkToken(lexer.next(), Kind.TYPE,		    5, 0, "image");
+		checkToken(lexer.next(), Kind.KW_VOID,	    6, 0, "void");
+		checkToken(lexer.next(), Kind.IMAGE_OP,	    7, 0, "getWidth");
+		checkToken(lexer.next(), Kind.IMAGE_OP,	    8, 0, "getHeight");
+		checkToken(lexer.next(), Kind.COLOR_OP,	    9, 0, "getRed");
+		checkToken(lexer.next(), Kind.COLOR_OP,	    10, 0, "getGreen");
+		checkToken(lexer.next(), Kind.COLOR_OP,	    11, 0, "getBlue");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	12, 0, "BLACK");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	13, 0, "BLUE");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	14, 0, "CYAN");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	15, 0, "DARK_GRAY");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	16, 0, "GRAY");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	17, 0, "GREEN");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	18, 0, "LIGHT_GRAY");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	19, 0, "MAGENTA");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	20, 0, "ORANGE");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	21, 0, "PINK");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	22, 0, "RED");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	23, 0, "WHITE");
+		checkToken(lexer.next(), Kind.COLOR_CONST,	24, 0, "YELLOW");
+		checkToken(lexer.next(), Kind.BOOLEAN_LIT,	25, 0, "true");
+		checkToken(lexer.next(), Kind.BOOLEAN_LIT,	26, 0, "false");
+		checkToken(lexer.next(), Kind.KW_IF,        27, 0, "if");
+		checkToken(lexer.next(), Kind.KW_ELSE,	    28, 0, "else");
+		checkToken(lexer.next(), Kind.KW_FI,	    29, 0, "fi");
+		checkToken(lexer.next(), Kind.KW_WRITE,	    30, 0, "write");
+		checkToken(lexer.next(), Kind.KW_CONSOLE,	31, 0, "console");
+		checkEOF(lexer.next());
+	}
+
 
 }

@@ -22,6 +22,22 @@ public class Token implements IToken {
         if(input.charAt(0) == '\"'){
             kind = Kind.STRING_LIT;
         }
+        else if(input.equals("int") || input.equals("float") || input.equals("string") || input.equals("boolean") || input.equals("color") || input.equals("image"))
+        {
+            kind = Kind.TYPE;
+        }
+        else if(input.equals("BLUE") || input.equals("CYAN") || input.equals("GRAY") || input.equals("DARK_GRAY") || input.equals("GREEN") || input.equals("LIGHT_GRAY") || input.equals("MAGENTA") || input.equals("ORANGE") || input.equals("PINK")|| input.equals("RED")||input.equals("WHITE")||input.equals("YELLOW")||input.equals("BLACK"))
+        {
+            kind = Kind.COLOR_CONST;
+        }
+        else if(input.equals("getRed") || input.equals("getBlue") || input.equals("getGreen"))
+        {
+            kind = Kind.COLOR_OP;
+        }
+        else if(input.equals("getWidth") || input.equals("getHeight"))
+        {
+            kind = Kind.IMAGE_OP;
+        }
         else if(input.charAt(0) == '$' || input.charAt(0) == '_' || //If input starts with a $ or _
                 (Character.isLetter(input.charAt(0)) == true && checkProtected(input) == false))//If input starts with a letter and is not a protected word
         {
@@ -53,22 +69,7 @@ public class Token implements IToken {
             }
         }
 
-        else if(input.equals("int") || input.equals("float") || input.equals("string") || input.equals("boolean") || input.equals("color") || input.equals("image"))
-        {
-            kind = Kind.TYPE;
-        }
-        else if(input.equals("BLUE") || input.equals("CYAN") || input.equals("GRAY") || input.equals("DARK_GRAY") || input.equals("GREEN") || input.equals("LIGHT_GRAY") || input.equals("MAGENTA") || input.equals("ORANGE") || input.equals("PINK"))
-        {
-            kind = Kind.COLOR_CONST;
-        }
-        else if(input.equals("getRed") || input.equals("getBlue") || input.equals("getBlue"))
-        {
-            kind = Kind.COLOR_OP;
-        }
-        else if(input.equals("getWidth") || input.equals("getHeight"))
-        {
-            kind = Kind.IMAGE_OP;
-        }
+
         else
         {
             switch (input) {
@@ -265,8 +266,15 @@ public class Token implements IToken {
 
     void populateProtected(){//Add protected words to the 'protected' array
         protectedWords.add("EOF");
-        protectedWords.add("True");
-        protectedWords.add("False");
+        protectedWords.add("true");
+        protectedWords.add("false");
+        protectedWords.add("void");
+        protectedWords.add("console");
+        protectedWords.add("if");
+        protectedWords.add("fi");
+        protectedWords.add("write");
+        protectedWords.add("else");
+
     }
 
     boolean checkProtected(String candidate){//Use this function to check if a string is a protected word
