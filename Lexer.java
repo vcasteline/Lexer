@@ -20,12 +20,13 @@ public class Lexer implements ILexer {
         }
 
         String stringInput = "";
-//        System.out.println("Lines: " + lines.size());
+
 
         for(int i=0; i< lines.size(); i++){//Loops through line array
+
             boolean wasSymbol = false;
             String line = lines.get(i);
-            //System.out.println("I'm here!" + i);
+
 
             if(line.length() == 0) {
                 break;
@@ -35,13 +36,14 @@ public class Lexer implements ILexer {
             for(int j = 0; j < lineSize; ++j) {//Iterates through individual strings
 
 
-
                 char candidate = line.charAt(j);
+
+
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
                 if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && !isSymbol(candidate) && candidate!='_') {//Letter, numbers, spaces, and # do not enter here
 
-                    if(spaceCheck(stringInput) == true || stringInput.isEmpty())
+                    if(isAllWhitespace(stringInput) == true || stringInput.isEmpty())
                     {
 
                     tokens.add(new Token(String.valueOf(candidate), i, j)); //Add token if input is not a number/letter
@@ -75,7 +77,7 @@ public class Lexer implements ILexer {
 
                             stringInput = spaceReplace(stringInput);
                             wasSymbol = true;
-                            System.out.println("checkSpace: " + candidate);
+
 
                         }
                         else
@@ -92,7 +94,7 @@ public class Lexer implements ILexer {
                     
 
 
-                    if((candidate == ' ' && line.charAt(0) != '#' && line.charAt(0) != '\"' && wasSymbol == false && spaceCheck(stringInput) == false) ||
+                    if((candidate == ' ' && line.charAt(0) != '#' && line.charAt(0) != '\"' && wasSymbol == false && isAllWhitespace(stringInput) == false) ||
                             (intLit == true && Character.isLetter(candidate) == true && isSymbol(candidate) == false))
                     {
 
@@ -101,7 +103,7 @@ public class Lexer implements ILexer {
                         stringInput = stringInput + candidate;
                         if(j != lineSize-1 && Character.isDigit(line.charAt(j+1)))
                         {
-                            System.out.println("im here");
+
                             intLit = true;
                         }
 
@@ -112,26 +114,39 @@ public class Lexer implements ILexer {
 
                     }
                     else if(Character.isDigit(candidate) && intLit){
-                        System.out.println("heree");
+
                         j = checkNumToken(line, j, i);
 
-                        stringInput = spaceReplace(line.substring(0, j+1));
+                        if(j != lineSize-1){
+                            stringInput = spaceReplace(line.substring(0, j+1));
+                        }else{
+                            stringInput = "";
+                        }
+
                         if(doubleZero==true){
                             intLit = true;
+                        }
+                        else{
+                            intLit= false;
                         }
 
 
 
                     }
 
-                        if(j == lineSize-1 && spaceCheck(stringInput)==false)//we ARE at the end of line and NOT a symbol
+                        if((j == lineSize-1 && isAllWhitespace(stringInput)==false) || (j == lineSize-1 && wasSymbol))//we ARE at the end of line and NOT a symbol
                         {
-                            if (stringInput.charAt(0) != '#' && !isSymbol(candidate) && intLit==false) {
+
+
+                            if (!stringInput.isEmpty() && stringInput.charAt(0) != '#' && isSymbol(candidate)==false && intLit==false) {
+
                                 tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
                             }
+
                             stringInput="";
 
                         }
+
                 }
 
             }
@@ -144,12 +159,12 @@ public class Lexer implements ILexer {
         {
             throw new LexicalException("Error");
         }
-        System.out.println("this is the token: "+tokens.get(currentToken).getKind());
+
         return tokens.get(currentToken);
 
     }
     public IToken peek(){
-        return tokens.get(0);
+        return tokens.get(currentToken+1);
     }
 
     public String spaceReplace(String input)
@@ -162,7 +177,7 @@ public class Lexer implements ILexer {
         return returnString;
     }
 
-    public boolean spaceCheck(String input)
+    public boolean isAllWhitespace(String input)
     {
         boolean allSpaces = true;
         for(int i = 0; i < input.length(); ++i)
@@ -216,7 +231,7 @@ public class Lexer implements ILexer {
 
 
         String token = input.substring(oldJ, newJ);
-        System.out.println("This is the token: " + token);
+
         tokens.add(new Token(token, currentI, oldJ));
 
         return newJ-1;

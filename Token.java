@@ -12,6 +12,8 @@ public class Token implements IToken {
     int col = 0;
     int returnInt = 0;
     float returnFloat= 0;
+    boolean returnBoolean =false;
+    String returnString = "";
     ArrayList<String> protectedWords = new ArrayList<String>();
 
     public Token(String input, int line, int col){
@@ -22,6 +24,7 @@ public class Token implements IToken {
 
         if(input.charAt(0) == '\"'){
             kind = Kind.STRING_LIT;
+            returnString = input;
         }
         else if(input.equals("int") || input.equals("float") || input.equals("string") || input.equals("boolean") || input.equals("color") || input.equals("image"))
         {
@@ -47,7 +50,7 @@ public class Token implements IToken {
         else if(Character.isDigit(input.charAt(0)))
         {
 //
-            System.out.println(input);
+
             if (input.length() > 10) {
                 kind = Kind.ERROR;
                 return;
@@ -55,7 +58,7 @@ public class Token implements IToken {
                 for(int i = 0; i < input.length(); ++i) {
                     if (input.charAt(i) == '.') {
                         kind = Kind.FLOAT_LIT;
-                        System.out.print("float");
+
                         returnFloat = Float.parseFloat(input);
                     }
 
@@ -78,9 +81,11 @@ public class Token implements IToken {
                 //     kind = Kind.STRING_LIT;
                 case "true":
                     kind = Kind.BOOLEAN_LIT;// 'true','false'
+                    returnBoolean = true;
                     break;
                 case "false":
                     kind = Kind.BOOLEAN_LIT;
+                    returnBoolean = false;
                     break;
                 case "(":
                     kind = Kind.LPAREN; // '('
@@ -197,10 +202,10 @@ public class Token implements IToken {
             }
         }
         this.line = line;
-        System.out.println("input:"+ input);
-        System.out.println("line:"+ this.line);
-        System.out.println("col:"+ this.col);
-        System.out.println("token:" + kind);
+//        System.out.println("input:"+ input);
+//        System.out.println("line:"+ this.line);
+//        System.out.println("col:"+ this.col);
+//        System.out.println("token:" + kind);
 
     }
     //returns the token kind
@@ -233,13 +238,13 @@ public class Token implements IToken {
 
 	//returns the boolean value represented by the characters of this token if kind is BOOLEAN_LIT
 	public boolean getBooleanValue(){
-        return false;
+        return returnBoolean;
     };
 	
 	//returns the String represented by the characters of this token if kind is STRING_LIT
 	//The delimiters should be removed and escape sequences replaced by the characters they represent.  
 	public String getStringValue(){
-        return "hello";
+        return returnString;
     };
 
     public boolean checkError(){//Used by Lexer.  Only Lexer can throw errors, so it needs to check if the token is an error

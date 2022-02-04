@@ -25,7 +25,7 @@ public class LexerTests {
 	static final boolean VERBOSE = true;
 	void show(Object obj) {
 		if(VERBOSE) {
-			System.out.println(obj);
+			//System.out.println(obj);
 		}
 	}
 	
@@ -394,6 +394,32 @@ public class LexerTests {
 		checkInt(lexer.next(), 0, 			1, 0);
 		checkFloat(lexer.next(), (float) 0.15,	1, 1);
 		checkFloat(lexer.next(), (float) 10.030,	2, 0);
+		assertThrows(LexicalException.class, () -> {
+			@SuppressWarnings("unused")
+			IToken token = lexer.next();
+		});
+	}
+	@Test
+	void testError1() throws LexicalException {
+		String input = """
+			abc
+			00.4
+			123
+			_Name1
+			_1@
+			""";
+		show(input);
+		ILexer lexer = getLexer(input);
+		//these checks should succeed
+		checkIdent(lexer.next(), "abc");
+		checkInt(lexer.next(), 0, 1,0);
+		checkToken(lexer.peek(), Kind.FLOAT_LIT, 1, 1);
+		checkToken(lexer.next(), Kind.FLOAT_LIT, 1, 1);
+		checkToken(lexer.next(), Kind.INT_LIT, 2,0);
+		checkIdent(lexer.next(), "_Name1", 3, 0);
+		checkIdent(lexer.next(), "_1", 4, 0);
+		//this is expected to throw an exception since @ is not a legal
+		//character unless it is part of a string or comment
 		assertThrows(LexicalException.class, () -> {
 			@SuppressWarnings("unused")
 			IToken token = lexer.next();
