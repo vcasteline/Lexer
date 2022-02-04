@@ -10,6 +10,7 @@ public class Lexer implements ILexer {
     char[] Symbols = {'=', '<', '>', '!', '-'};
     int currentToken = -1;
     int indentCheck = 0;
+    boolean doubleZero = false;
     public Lexer(String input){
         ArrayList<String> lines = new ArrayList<String>();
         Scanner scan =new Scanner(input);
@@ -39,14 +40,14 @@ public class Lexer implements ILexer {
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
                 if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && !isSymbol(candidate) && candidate!='_') {//Letter, numbers, spaces, and # do not enter here
-                   System.out.println("checkMod: " + candidate);
+
                     if(spaceCheck(stringInput) == true || stringInput.isEmpty())
                     {
-                        System.out.println("checkModTop: " + candidate);
+
                     tokens.add(new Token(String.valueOf(candidate), i, j)); //Add token if input is not a number/letter
                     }
                     else {
-                        System.out.println("checkModBottom: " + candidate);
+
                         tokens.add(new Token(stringInput, i, j)); //Send stringInput as a token
                         spaceReplace(stringInput); //Flush string input
                         tokens.add(new Token(String.valueOf(candidate), i, j)); //send non letter/number as a token
@@ -54,32 +55,6 @@ public class Lexer implements ILexer {
 
                 }
                 else {
-
-
-
-//                    if(candidate == '=' && j == lineSize-1) {//IF END OF LINE AND CANDIDATE IS '='
-//                        stringInput =  stringInput + candidate;
-//                    }
-//                    else if (candidate == '=')
-//                    {
-//                        if(line.charAt(j+1) == '=') {
-//                           stringInput =  stringInput + candidate + candidate;
-//
-//                            tokens.add(new Token(stringInput, i, 0)); //If stringInput is ==, send it as token
-//                            j += 1;
-//                            stringInput = spaceReplace(stringInput);
-//                            wasSymbol = true;
-//                        }
-//                        else
-//                        {
-//                            stringInput = stringInput + candidate;
-//                            tokens.add(new Token(stringInput, i, 0));
-//                           // candidate = ' ';
-//                            stringInput = spaceReplace(stringInput);
-//                            wasSymbol = true;
-//
-//                        }
-//                    }
 
 
                     if(isSymbol(candidate) && j == lineSize-1) {//IF END OF LINE AND CANDIDATE IS Symbol
@@ -120,26 +95,38 @@ public class Lexer implements ILexer {
                     if((candidate == ' ' && line.charAt(0) != '#' && line.charAt(0) != '\"' && wasSymbol == false && spaceCheck(stringInput) == false) ||
                             (intLit == true && Character.isLetter(candidate) == true && isSymbol(candidate) == false))
                     {
-                        System.out.println("I'm here! " + wasSymbol);
+
                         tokens.add(new Token(stringInput, i, 0));
                         stringInput = spaceReplace(stringInput);
                         stringInput = stringInput + candidate;
                         if(j != lineSize-1 && Character.isDigit(line.charAt(j+1)))
                         {
+                            System.out.println("im here");
                             intLit = true;
                         }
 
                     }
-                    else if(isSymbol(candidate) == false) {
+                    else if(isSymbol(candidate) == false && !intLit) {
                         stringInput = stringInput + candidate;//Add candidate to string
                         wasSymbol = false;
 
                     }
+                    else if(Character.isDigit(candidate) && intLit){
+                        System.out.println("heree");
+                        j = checkNumToken(line, j, i);
+
+                        stringInput = spaceReplace(line.substring(0, j+1));
+                        if(doubleZero==true){
+                            intLit = true;
+                        }
 
 
-                        if(j == lineSize-1 && stringInput.isEmpty() == false)//we ARE at the end of line and NOT a symbol
+
+                    }
+
+                        if(j == lineSize-1 && spaceCheck(stringInput)==false)//we ARE at the end of line and NOT a symbol
                         {
-                            if (stringInput.charAt(0) != '#' && !isSymbol(candidate)) {
+                            if (stringInput.charAt(0) != '#' && !isSymbol(candidate) && intLit==false) {
                                 tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
                             }
                             stringInput="";
@@ -157,6 +144,7 @@ public class Lexer implements ILexer {
         {
             throw new LexicalException("Error");
         }
+        System.out.println("this is the token: "+tokens.get(currentToken).getKind());
         return tokens.get(currentToken);
 
     }
@@ -198,6 +186,40 @@ public class Lexer implements ILexer {
             }
         }
         return false;
+    }
+
+    public int checkNumToken(String input, int oldJ, int currentI){
+        doubleZero=false;
+        boolean foundDecimal = false;
+        int newJ = input.length();
+        if(input.charAt(0)=='0' && input.length()>1){
+            if(Character.isDigit(input.charAt(oldJ + 1))){
+                newJ=oldJ+1;
+                doubleZero =true;
+            }
+        }
+        else{
+            for(int i=oldJ; i< input.length();i++){
+                char candidate = input.charAt(i);
+
+                if(!Character.isDigit(candidate)){
+                    if(candidate == '.' && foundDecimal==false){
+                        foundDecimal = true;
+                    }
+                    else{
+                        newJ = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+
+        String token = input.substring(oldJ, newJ);
+        System.out.println("This is the token: " + token);
+        tokens.add(new Token(token, currentI, oldJ));
+
+        return newJ-1;
     }
 
 

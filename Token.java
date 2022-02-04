@@ -11,6 +11,7 @@ public class Token implements IToken {
     int line = 0;
     int col = 0;
     int returnInt = 0;
+    float returnFloat= 0;
     ArrayList<String> protectedWords = new ArrayList<String>();
 
     public Token(String input, int line, int col){
@@ -45,31 +46,27 @@ public class Token implements IToken {
         }
         else if(Character.isDigit(input.charAt(0)))
         {
-            if(input.length() > 1 && input.charAt(0) == 0) {
+//
+            System.out.println(input);
+            if (input.length() > 10) {
                 kind = Kind.ERROR;
+                return;
             }
-            else
-            {
                 for(int i = 0; i < input.length(); ++i) {
                     if (input.charAt(i) == '.') {
                         kind = Kind.FLOAT_LIT;
+                        System.out.print("float");
+                        returnFloat = Float.parseFloat(input);
                     }
-                    else {
-                        if (input.length() > 10) {
-                            kind = Kind.ERROR;
-                        }
 
-                        else {
-                            kind = Kind.INT_LIT;
-                            //System.out.println("Input: " + input);
-                            returnInt = Integer.parseInt(input);
-                        }
-                    }
                 }
-            }
+                if(kind != Kind.FLOAT_LIT){
+                    kind = Kind.INT_LIT;
+                    //System.out.println("Input: " + input);
+                    returnInt = Integer.parseInt(input);
+                }
+            this.col = col;
         }
-
-
         else
         {
             switch (input) {
@@ -231,7 +228,7 @@ public class Token implements IToken {
 
 	//returns the float value represented by the characters of this token if kind is FLOAT_LIT
 	public float getFloatValue(){
-        return 0;
+        return returnFloat;
     };
 
 	//returns the boolean value represented by the characters of this token if kind is BOOLEAN_LIT

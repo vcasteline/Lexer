@@ -12,6 +12,8 @@ import edu.ufl.cise.plc.IToken;
 import edu.ufl.cise.plc.IToken.Kind;
 import edu.ufl.cise.plc.LexicalException;
 
+import java.util.Arrays;
+
 
 public class LexerTests {
 
@@ -71,8 +73,26 @@ public class LexerTests {
 	void checkEOF(IToken t) {
 		checkToken(t, Kind.EOF);
 	}
-	
-	
+	String getASCII(String s) {
+		int[] ascii = new int[s.length()];
+		for (int i = 0; i != s.length(); i++) {
+			ascii[i] = s.charAt(i);
+		}
+		return Arrays.toString(ascii);
+	}
+	void checkFloat(IToken t, float expectedValue) {
+		assertEquals(Kind.FLOAT_LIT, t.getKind());
+		assertEquals(expectedValue, t.getFloatValue());
+	}
+
+	//check that this token  is an FLOAT_LIT with expected float value and position
+	void checkFloat(IToken t, float expectedValue, int expectedLine, int expectedColumn) {
+		checkFloat(t,expectedValue);
+		assertEquals(new IToken.SourceLocation(expectedLine,expectedColumn), t.getSourceLocation());
+	}
+
+
+
 	//The lexer should add an EOF token to the end.
 	@Test
 	void testEmpty() throws LexicalException {
@@ -322,6 +342,62 @@ public class LexerTests {
 		checkToken(lexer.next(), Kind.KW_WRITE,	    30, 0, "write");
 		checkToken(lexer.next(), Kind.KW_CONSOLE,	31, 0, "console");
 		checkEOF(lexer.next());
+	}
+
+	@Test
+	public void testEscapeSequences0() throws LexicalException {
+		String input = "\"\\b \\t \\n \\f \\r \"";
+		show(input);
+		show("input chars= " + getASCII(input));
+		ILexer lexer = getLexer(input);
+		IToken t = lexer.next();
+		String val = t.getStringValue();
+		show("getStringValueChars=     " + getASCII(val));
+		String expectedStringValue = "\b \t \n \f \r ";
+		show("expectedStringValueChars=" + getASCII(expectedStringValue));
+		assertEquals(expectedStringValue, val);
+		String text = t.getText();
+		show("getTextChars=     " +getASCII(text));
+		String expectedText = "\"\\b \\t \\n \\f \\r \"";
+		show("expectedTextChars="+getASCII(expectedText));
+		assertEquals(expectedText,text);
+	}
+
+	@Test
+	public void testEscapeSequences1() throws LexicalException {
+		String input = "   \" ...  \\\"  \\\'  \\\\  \"";
+		show(input);
+		show("input chars= " + getASCII(input));
+		ILexer lexer = getLexer(input);
+		IToken t = lexer.next();
+		String val = t.getStringValue();
+		show("getStringValueChars=     " + getASCII(val));
+		String expectedStringValue = " ...  \"  \'  \\  ";
+		show("expectedStringValueChars=" + getASCII(expectedStringValue));
+		assertEquals(expectedStringValue, val);
+		String text = t.getText();
+		show("getTextChars=     " +getASCII(text));
+		String expectedText = "\" ...  \\\"  \\\'  \\\\  \""; //almost the same as input, but white space is omitted
+		show("expectedTextChars="+getASCII(expectedText));
+		assertEquals(expectedText,text);
+	}
+	@Test
+	void testIntFloatError() throws LexicalException {
+		String input = """
+			0.32
+			00.15
+			10.030.32
+			""";
+		show(input);
+		ILexer lexer = getLexer(input);
+		checkFloat(lexer.next(), (float) 0.32,	0, 0);
+		checkInt(lexer.next(), 0, 			1, 0);
+		checkFloat(lexer.next(), (float) 0.15,	1, 1);
+		checkFloat(lexer.next(), (float) 10.030,	2, 0);
+		assertThrows(LexicalException.class, () -> {
+			@SuppressWarnings("unused")
+			IToken token = lexer.next();
+		});
 	}
 
 
