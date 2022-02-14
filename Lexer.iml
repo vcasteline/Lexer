@@ -23,5 +23,17 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/Downloads/hamcrest-2.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="ASTClassSources" level="application" />
+    <orderEntry type="library" name="ASTClassSources (2)" level="project" />
+    <orderEntry type="library" name="edu" level="project" />
   </component>
 </module>

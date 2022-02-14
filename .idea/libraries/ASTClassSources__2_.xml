@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="ASTClassSources (2)">
+    <CLASSES />
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/out/production/Lexer/edu/ufl/cise/plc/lib/ASTClassSources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
