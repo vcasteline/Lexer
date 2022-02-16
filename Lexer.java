@@ -51,7 +51,7 @@ public class Lexer implements ILexer {
                     else {
 
                         tokens.add(new Token(stringInput, i, j)); //Send stringInput as a token
-                        spaceReplace(stringInput); //Flush string input
+                        stringInput = spaceReplace(stringInput); //Flush string input
                         tokens.add(new Token(String.valueOf(candidate), i, j)); //send non letter/number as a token
                     }
 
