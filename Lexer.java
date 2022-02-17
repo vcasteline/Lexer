@@ -77,6 +77,7 @@ public class Lexer implements ILexer {
                         isQuote = true;
                         int lastQuote = line.lastIndexOf('\"');
                         if(lastQuote==j){
+                            stringInput+="@";
                             stringInput="";
                         }
                         stringInput+=line.substring(j, lastQuote+1);
