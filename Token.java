@@ -16,7 +16,7 @@ public class Token implements IToken {
     boolean returnBoolean =false;
     String returnString = "";
     ArrayList<String> protectedWords = new ArrayList<String>();
-    char [] escapes = {'\\', 'b', 't', 'n', 'f', 'r', '\"', '\''};
+    char [] escapes = { 'b', 't', 'n', 'f', 'r', '\"', '\''};
 
 
 
@@ -27,14 +27,15 @@ public class Token implements IToken {
 
         input = clearWhiteSpace(input);
         this.input = input;
-
+        System.out.println("token input: " + input);
 
         if(input.charAt(0) == '\"'){
             kind = Kind.STRING_LIT;
-            System.out.println("input before substring: " + input);
+           // System.out.println("input before substring: " + input);
+            input = escape(input);
             input = input.substring(1,input.length()-1);
-            System.out.println("input after substring: " + input);
-            //input = escape(input);
+           // System.out.println("input after substring: " + input);
+
             //System.out.println("input after escape: " + input);
 
             returnString = input;
@@ -301,24 +302,110 @@ public class Token implements IToken {
         }
         return false;
     }
-    String escape(String inputString){
-        StringBuilder sb = new StringBuilder(inputString);
-        for(int i = 0; i < inputString.length(); i++){
-            if(inputString.charAt(i) == '\\' ){
-                if(checkEscape(inputString.charAt(i+1))==true){
-                    //inputString.replaceFirst("\\" , "");
-                    sb.deleteCharAt(i);
 
-                }
-                else{
-                    kind = Kind.ERROR;
-                    //throw new LexicalException("lexical");
-                }
+
+    String escape(String inputString)
+    {
+        int loopLength = inputString.length();
+        boolean wasSlash = false;
+        for(int i = 0; i < loopLength; ++ i)
+        {
+            if(inputString.charAt(i) == '\\' && wasSlash == false)
+            {
+                inputString = inputString.substring(0, i) + '@'
+                        + inputString.substring(i + 1);
+
+                wasSlash = true;
+            }
+
+            else if(inputString.charAt(i) == '\\' && wasSlash == true)
+            {
+                wasSlash = false;
+            }
+            else if(inputString.charAt(i) != '\\' && wasSlash == true && isEscape(inputString.charAt(i)) == false)
+            {
+
+                kind = Kind.ERROR;
+            }
+            else
+            {
+                wasSlash = false;
             }
         }
-        return sb.toString();
+        ////////////////Replace @s//////////////
+        char backSpace = 8;
+        String escapeString = "";
+        escapeString += backSpace;
+        inputString = inputString.replace("@b" , escapeString);
+
+        char tab = 9;
+        escapeString = "";
+        escapeString += tab;
+        inputString = inputString.replace("@t" , escapeString);
+
+        char newLine = 10;
+        escapeString = "";
+        escapeString += newLine;
+        inputString = inputString.replace("@n" , escapeString);
+
+        char f = 12;
+        escapeString = "";
+        escapeString += f;
+        inputString = inputString.replace("@f" , escapeString);
+
+        char r = 13;
+        escapeString = "";
+        escapeString += r;
+        inputString = inputString.replace("@r" , escapeString);
+
+
+
+
+
+        for(int i = 0; i < loopLength; ++i)
+        {
+           inputString = inputString.replace("@" , "");
+        }
+
+        return inputString;
     }
-    boolean checkEscape(char candidate){//Use this function to check if a string is a protected word
+//    String escape(String inputString){
+//        int loopLength = inputString.length();
+//        StringBuilder sb = new StringBuilder(inputString);
+//        for(int i = 0; i < loopLength; i++){
+//            if(inputString.charAt(i) == '\\' ){
+//
+//
+//                if(isEscape(inputString.charAt(i+1))==false) {
+//                    if(inputString.charAt(i+1) == '\\')
+//                    {
+//                       // String newString = inputString.substring(0,i-1) + '@' + inputString.substring(i+1);
+//                       // ++i;
+//                    }
+//                    else {
+//                        kind = Kind.ERROR;
+//                    }
+//                }
+//
+//                    else
+//                    {
+//                        System.out.println("about to break");
+//                        String newString = inputString.substring(0,i-1) + '@' + inputString.substring(i+1);
+//                        inputString = newString;
+//                        System.out.println("broke");
+//
+//                    }
+//                    //inputString.replaceFirst("\\" , "");
+//                    //sb.deleteCharAt(i);
+//                   // System.out.println("escapeCheck:" + inputString.charAt(i) + inputString.charAt(i+1) + "i: " + i);
+//                }
+//        }
+//        //inputString = sb.toString();
+//        System.out.println(("after replacemene: " + inputString));
+//        return inputString;
+//    }
+
+    boolean isEscape(char candidate){//Use this function to check if a string is a protected word
         for(int i = 0; i < escapes.length; ++i)
         {
             if(candidate == escapes[i]){

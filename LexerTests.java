@@ -439,6 +439,23 @@ public class LexerTests {
 		checkEOF(lexer.next());
 
 	}
+	@Test
+	void checkEscape() throws LexicalException{
+		String input = """
+  		abc#this is a comment 
+  		123.4
+  		""";
+
+		show(input);
+		ILexer lexer = getLexer(input);
+		checkToken(lexer.next(), Kind.IDENT, 0, 0);
+		checkToken(lexer.next(), Kind.FLOAT_LIT, 1, 0);
+
+
+
+		checkEOF(lexer.next());
+
+	}
 
 
 }

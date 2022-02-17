@@ -76,10 +76,14 @@ public class Lexer implements ILexer {
                     if (isQuote == false) {
                         isQuote = true;
                         int lastQuote = line.lastIndexOf('\"');
+
                         if(lastQuote==j){
                             stringInput+="@";
+                            tokens.add(new Token(stringInput, i, j)); //Send stringInput as a token
                             stringInput="";
+                            continue;
                         }
+
                         stringInput+=line.substring(j, lastQuote+1);
                         tokens.add(new Token(stringInput, i, j));
                         stringInput = spaceReplace(stringInput);
@@ -162,7 +166,7 @@ public class Lexer implements ILexer {
                         }
 
                     }
-                    else if(isSymbol(candidate) == false && !intLit) {//QUOTES and LETTERS end up here
+                    else if(isSymbol(candidate) == false && !intLit && candidate != '#') {//QUOTES and LETTERS end up here
                         stringInput = stringInput + candidate;//Add candidate to string
                         wasSymbol = false;
 
@@ -197,15 +201,25 @@ public class Lexer implements ILexer {
                         if((j == lineSize-1 && isAllWhitespace(stringInput)==false) || (j == lineSize-1 && wasSymbol))//we ARE at the end of line and NOT a symbol
                         {
 
+                            System.out.println("made it, baby!!!!");
 
-                            if (!stringInput.isEmpty() && stringInput.charAt(0) != '#' && candidate != '\"' && isSymbol(candidate)==false && intLit==false) {
+                            if (!stringInput.isEmpty() && line.charAt(0) != '#' && candidate != '\"' && isSymbol(candidate)==false && intLit==false) {
+                                System.out.println("made it, baby?????");
 
                                 tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
                             }
 
                             stringInput="";
 
+
                         }
+                        else if(candidate == '#' && stringInput.isEmpty() == false)
+                    {
+                        System.out.println("made it, baby!");
+                        tokens.add(new Token(stringInput, i, 0));
+                        stringInput="";
+                        break;
+                    }
 
                 }
 
