@@ -28,6 +28,7 @@ public class Token implements IToken {
 
         if(input.charAt(0) == '\"'){
             kind = Kind.STRING_LIT;
+            input = input.substring(1,input.length()-1);
             returnString = input;
         }
         else if(input.equals("int") || input.equals("float") || input.equals("string") || input.equals("boolean") || input.equals("color") || input.equals("image"))

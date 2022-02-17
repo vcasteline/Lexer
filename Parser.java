@@ -12,8 +12,8 @@ public class Parser implements IParser{
     ILexer lexer;
     //Kind tokenKind;
     IToken currToken;
-    boolean error = false;
-
+    boolean errorSyn = false;
+    boolean errorLex = false;
 
     Parser(String input){
 
@@ -27,7 +27,20 @@ public class Parser implements IParser{
         //SOS();
     }
 
+    public ASTNode parse() throws PLCException{
+        // System.out.println(currentNode);
+        Expr returnExpr = expr();
 
+        if(errorLex){
+            throw new LexicalException("Lexical");
+        }
+        if(errorSyn){
+            throw new SyntaxException("Syntax");
+        }
+
+        return returnExpr;
+
+    }
 
     public Expr expr()//::=ConditionalExpr | LogicalOrExpr
     {
@@ -58,14 +71,11 @@ public class Parser implements IParser{
                 condition = expr();
                 match(Kind.RPAREN);
                 trueExp = expr();
-
-                if(isKind(Kind.KW_ELSE)){
-
-                    consume();
+                    match(Kind.KW_ELSE);
                     falseExp = expr();
                     match(Kind.KW_FI);
                     currExpr = new ConditionalExpr(firstToken, condition, trueExp, falseExp);
-                }
+
             //}
         }
         return currExpr;
@@ -140,13 +150,17 @@ public class Parser implements IParser{
         while(isKind(Kind.PLUS) || isKind(Kind.MINUS))
         {
             IToken op = currToken;
-            consume();
+            System.out.println("before additive consume "+ currToken.getKind());
 
+            consume();
+            System.out.println("after additive consume "+ currToken.getKind());
             right = multiplicativeExpr();
+            //if(right)
             if(right==null){
-                error =true;
+                errorSyn =true;
                 //throw new LexicalException("lexical error");
             }
+
             left = new BinaryExpr(firstToken, left, op, right);
         }
         return left;
@@ -219,10 +233,15 @@ public class Parser implements IParser{
 
         //CONSUME
         //expr();
-        //System.out.println("primary expression "+ currentExpr);
-        //System.out.println("primary expression token before: "+ currToken.getKind() +" "+ currToken.getText());
-        consume();
-        //System.out.println("primary expression token after consume(): "+ currToken.getKind() +" "+ currToken.getText());
+        if(isKind(Kind.LPAREN)){
+            consume();
+            currentExpr = expr();
+            match(Kind.RPAREN);
+
+        }else{
+            consume();
+        }
+
         return currentExpr;
     }
     public PixelSelector pixelSelector(){
@@ -292,15 +311,7 @@ public class Parser implements IParser{
      }
 
 
-    public ASTNode parse() throws PLCException{
-       // System.out.println(currentNode);
-        Expr returnExpr = expr();
-        if(error){
-            throw new SyntaxException("Syntax");
-        }
-        return returnExpr;
 
-    }
     ILexer getLexer(String input){
         return CompilerComponentFactory.getLexer(input);
     }
@@ -321,14 +332,36 @@ public class Parser implements IParser{
 
     void consume()
     {
+        System.out.println("Entered consume"+ currToken.getKind());
+
         try {
 
-            currToken = lexer.next();
-            if(currToken.getKind() == Kind.ERROR){
-                throw new LexicalException("Lexical exception");
+            if(currToken.getKind()==Kind.EOF){
+                System.out.println("entered syntax exception "+ currToken.getKind());
+
+                //errorSyn = true;
+                throw new SyntaxException("syntax exception");
+
+            }
+            System.out.println("about to consume "+ currToken.getKind());
+
+            try{
+                currToken = lexer.next();
+            }
+            catch (LexicalException l){
+                errorLex = true;
             }
 
-        } catch (LexicalException e) {
+            System.out.println("Consumed, now token is: " + currToken.getKind());
+
+            if(currToken.getKind() == Kind.ERROR){
+                System.out.println("entered lexical error "+ currToken.getKind());
+
+                errorLex = true;
+                //throw new LexicalException("Lexical exception");
+            }
+
+        } catch (PLCException e) {
             e.printStackTrace();
         }
     }
@@ -342,7 +375,7 @@ public class Parser implements IParser{
         }
         else{
             System.out.println("error set to true");
-            error =true;
+            errorSyn=true;
             return false;
         }
 
