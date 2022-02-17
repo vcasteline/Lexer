@@ -9,8 +9,10 @@ import java.util.Scanner;
 public class Lexer implements ILexer {
     ArrayList<Token> tokens = new ArrayList<Token>();
     char[] Symbols = {'=', '<', '>', '!', '-'};
+    char [] escapes = {'\\', 'b', 't', 'n', 'f', 'r', '\"', '\''};
     int currentToken = -1;
     int indentCheck = 0;
+    boolean isQuote = false;
     boolean doubleZero = false;
     public Lexer(String input){
         ArrayList<String> lines = new ArrayList<String>();
@@ -46,6 +48,10 @@ public class Lexer implements ILexer {
                     candidate = ' ';
                 }
 
+                if (candidate == '"')
+                {
+                    isQuote = !isQuote;
+                }
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
                 if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && !isSymbol(candidate) && candidate!='_') {//Letter, numbers, spaces, and # do not enter here
@@ -101,8 +107,8 @@ public class Lexer implements ILexer {
                     
 
 
-                    if((candidate == ' ' && line.charAt(0) != '#' && line.charAt(0) != '\"' && wasSymbol == false && isAllWhitespace(stringInput) == false) ||
-                            (intLit == true && Character.isLetter(candidate) == true && isSymbol(candidate) == false))
+                    if((candidate == ' ' && line.charAt(0) != '#' && isQuote == false && line.charAt(0) != '\"' && wasSymbol == false && isAllWhitespace(stringInput) == false) ||
+                            (intLit == true && Character.isLetter(candidate) == true && isSymbol(candidate) == false && isQuote == false))
                     {
 
                         tokens.add(new Token(stringInput, i, 0));
