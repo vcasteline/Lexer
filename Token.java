@@ -16,6 +16,9 @@ public class Token implements IToken {
     boolean returnBoolean =false;
     String returnString = "";
     ArrayList<String> protectedWords = new ArrayList<String>();
+    char [] escapes = {'\\', 'b', 't', 'n', 'f', 'r', '\"', '\''};
+
+
 
     public Token(String input, int line, int col){
         populateProtected();
@@ -28,7 +31,12 @@ public class Token implements IToken {
 
         if(input.charAt(0) == '\"'){
             kind = Kind.STRING_LIT;
+            System.out.println("input before substring: " + input);
             input = input.substring(1,input.length()-1);
+            System.out.println("input after substring: " + input);
+            //input = escape(input);
+            //System.out.println("input after escape: " + input);
+
             returnString = input;
         }
         else if(input.equals("int") || input.equals("float") || input.equals("string") || input.equals("boolean") || input.equals("color") || input.equals("image"))
@@ -288,6 +296,32 @@ public class Token implements IToken {
         for(int i = 0; i < protectedWords.size(); ++i)
         {
             if(candidate.equals(protectedWords.get(i)) == true){
+                return true;
+            }
+        }
+        return false;
+    }
+    String escape(String inputString){
+        StringBuilder sb = new StringBuilder(inputString);
+        for(int i = 0; i < inputString.length(); i++){
+            if(inputString.charAt(i) == '\\' ){
+                if(checkEscape(inputString.charAt(i+1))==true){
+                    //inputString.replaceFirst("\\" , "");
+                    sb.deleteCharAt(i);
+
+                }
+                else{
+                    kind = Kind.ERROR;
+                    //throw new LexicalException("lexical");
+                }
+            }
+        }
+        return sb.toString();
+    }
+    boolean checkEscape(char candidate){//Use this function to check if a string is a protected word
+        for(int i = 0; i < escapes.length; ++i)
+        {
+            if(candidate == escapes[i]){
                 return true;
             }
         }

@@ -15,6 +15,7 @@ public class Lexer implements ILexer {
     boolean isQuote = false;
     int quoteCheck = 0;
     boolean doubleZero = false;
+    boolean instaBreak = false;
     public Lexer(String input){
         ArrayList<String> lines = new ArrayList<String>();
         Scanner scan =new Scanner(input);
@@ -27,10 +28,13 @@ public class Lexer implements ILexer {
 
 
         for(int i=0; i< lines.size(); i++){//Loops through line array
-
+            System.out.println("input j: "+ stringInput);
+            if(isAllWhitespace(stringInput)){
+                stringInput="";
+            }
             boolean wasSymbol = false;
             String line = lines.get(i);
-
+            System.out.println("this is the whole line: "+ line);
 
             if(line.length() == 0) {
                 break;
@@ -38,11 +42,24 @@ public class Lexer implements ILexer {
             boolean intLit = Character.isDigit(line.charAt(0));
             int lineSize = lines.get(i).length();
             for(int j = 0; j < lineSize; ++j) {//Iterates through individual strings
+               // if(line.charAt(0)==47){
 
+                    //System.out.println("true");
+                //}
 
                 char candidate = line.charAt(j);
                 int ascii = candidate;
 
+//                if(instaBreak){
+//                    instaBreak = false;
+//                    continue;
+//                }
+                if(candidate=='\\'){
+                    instaBreak =true;
+                    stringInput+=candidate;
+                    System.out.println("line at j+1 "+ line.charAt(j+1));
+                    continue;
+                }
                 if(ascii==9){
 
                     stringInput+="  ";
@@ -58,6 +75,16 @@ public class Lexer implements ILexer {
                 {
                     if (isQuote == false) {
                         isQuote = true;
+                        int lastQuote = line.lastIndexOf('\"');
+                        if(lastQuote==j){
+                            stringInput="";
+                        }
+                        stringInput+=line.substring(j, lastQuote+1);
+                        tokens.add(new Token(stringInput, i, j));
+                        stringInput = spaceReplace(stringInput);
+                        isQuote=false;
+                        j = lastQuote;
+                        continue;
                     }
                     else if(isQuote == true)
                     {

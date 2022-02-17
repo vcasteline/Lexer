@@ -580,6 +580,68 @@ class Assignment2StarterTests {
 
 
 	}
+	@DisplayName("bangBool")
+	@Test
+	public void bangBool(TestInfo testInfo) throws Exception {
+		String input = """
+                !true
+                """;
+		show("-------------");
+		show(input);
+		Expr ast = (Expr) getAST(input);
+		show(ast);
+		assertThat("", ast, instanceOf(UnaryExpr.class));
+		assertEquals(BANG, ((UnaryExpr) ast).getOp().getKind());
+		Expr var1 = ((UnaryExpr) ast).getExpr();
+		assertThat("", var1, instanceOf(BooleanLitExpr.class));
+		assertEquals(true, ((BooleanLitExpr) var1).getValue());
+	}
+	@DisplayName("Test parentheses")
+	@Test
+	public void testParentheses(TestInfo testInfo) throws Exception {
+		String input = """
+				a + ((b + c) * 4) + e
+				""";
+		show("-------------");
+		show(input);
+		Expr ast = (Expr) getAST(input);
+		show(ast);
+
+		assertThat("", ast, instanceOf(BinaryExpr.class));
+		assertEquals(PLUS, ((BinaryExpr) ast).getOp().getKind());
+
+		Expr addition = ((BinaryExpr) ast).getLeft();
+		assertThat("", addition, instanceOf(BinaryExpr.class));
+		assertEquals(PLUS, ((BinaryExpr) addition).getOp().getKind());
+
+		Expr identE = ((BinaryExpr) ast).getRight();
+		assertThat("", identE, instanceOf(IdentExpr.class));
+		assertEquals("e", identE.getText());
+
+		Expr identA = ((BinaryExpr) addition).getLeft();
+		assertThat("", identA, instanceOf(IdentExpr.class));
+		assertEquals("a", identA.getText());
+
+		Expr multExpr = ((BinaryExpr) addition).getRight();
+		assertThat("", multExpr, instanceOf(BinaryExpr.class));
+		assertEquals(TIMES, ((BinaryExpr) multExpr).getOp().getKind());
+
+		Expr bPlusC = ((BinaryExpr) multExpr).getLeft();
+		assertThat("", bPlusC, instanceOf(BinaryExpr.class));
+		assertEquals(PLUS, ((BinaryExpr) bPlusC).getOp().getKind());
+
+		Expr identB = ((BinaryExpr) bPlusC).getLeft();
+		assertThat("", identB, instanceOf(IdentExpr.class));
+		assertEquals("b", identB.getText());
+
+		Expr identC = ((BinaryExpr) bPlusC).getRight();
+		assertThat("", identC, instanceOf(IdentExpr.class));
+		assertEquals("c", identC.getText());
+
+		Expr int_lit4 = ((BinaryExpr) multExpr).getRight();
+		assertThat("", int_lit4, instanceOf(IntLitExpr.class));
+		assertEquals(4, ((IntLitExpr) int_lit4).getValue());
+	}
 
 
 
@@ -587,4 +649,5 @@ class Assignment2StarterTests {
 
 
 
-}
+
+	}

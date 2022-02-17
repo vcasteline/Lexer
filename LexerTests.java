@@ -347,6 +347,7 @@ public class LexerTests {
 	@Test
 	public void testEscapeSequences0() throws LexicalException {
 		String input = "\"\\b \\t \\n \\f \\r \"";
+
 		show(input);
 		show("input chars= " + getASCII(input));
 		ILexer lexer = getLexer(input);
@@ -424,6 +425,19 @@ public class LexerTests {
 			@SuppressWarnings("unused")
 			IToken token = lexer.next();
 		});
+	}
+	@Test
+	void checkQuote() throws LexicalException{
+		String input = """
+		123 "This is a string" a 
+			""";
+		show(input);
+		ILexer lexer = getLexer(input);
+		checkToken(lexer.next(), Kind.INT_LIT, 0, 0);
+		checkToken(lexer.next(), Kind.STRING_LIT, 0,4);
+		checkToken(lexer.next(), Kind.IDENT, 0,23);
+		checkEOF(lexer.next());
+
 	}
 
 
