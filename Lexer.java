@@ -2,6 +2,7 @@ package edu.ufl.cise.plc;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 
@@ -37,7 +38,13 @@ public class Lexer implements ILexer {
 
 
                 char candidate = line.charAt(j);
+                int ascii = candidate;
 
+                if(ascii==9){
+
+                    stringInput+="  ";
+                    candidate = ' ';
+                }
 
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
@@ -158,6 +165,7 @@ public class Lexer implements ILexer {
         if(tokens.get(currentToken).checkError() == true)//Check if token is an error
         {
             throw new LexicalException("Error");
+
         }
 
         return tokens.get(currentToken);
@@ -165,6 +173,13 @@ public class Lexer implements ILexer {
     }
     public IToken peek(){
         return tokens.get(currentToken+1);
+    }
+    String getAscii(String s){
+        int[] ascii = new int[s.length()];
+        for(int i=0; i != s.length(); ++i){
+            ascii[i] = s.charAt(i);
+        }
+        return Arrays.toString(ascii);
     }
 
     public String spaceReplace(String input)

@@ -3,6 +3,7 @@ package edu.ufl.cise.plc;
 import edu.ufl.cise.plc.IToken;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Token implements IToken {
     Kind kind;
@@ -18,6 +19,9 @@ public class Token implements IToken {
 
     public Token(String input, int line, int col){
         populateProtected();
+
+        //System.out.println("ascii " + getAscii(input));
+
         input = clearWhiteSpace(input);
         this.input = input;
 

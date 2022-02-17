@@ -12,6 +12,8 @@ public class Parser implements IParser{
     ILexer lexer;
     //Kind tokenKind;
     IToken currToken;
+    boolean error = false;
+
 
     Parser(String input){
 
@@ -27,7 +29,7 @@ public class Parser implements IParser{
 
 
 
-    public Expr expr() //::=ConditionalExpr | LogicalOrExpr
+    public Expr expr()//::=ConditionalExpr | LogicalOrExpr
     {
         Expr currExpr = null;
         if(isKind(Kind.KW_IF)){
@@ -47,10 +49,12 @@ public class Parser implements IParser{
         Expr falseExp = null;
 
         if(isKind(Kind.KW_IF)){
+            System.out.println("IF "+ currToken.getKind());
             consume();
-
-            if(isKind(Kind.LPAREN)){
-                consume();
+            System.out.println("consumed if");
+            //if(isKind(Kind.LPAREN)){
+                //consume();
+                match(Kind.LPAREN);
                 condition = expr();
                 match(Kind.RPAREN);
                 trueExp = expr();
@@ -62,45 +66,66 @@ public class Parser implements IParser{
                     match(Kind.KW_FI);
                     currExpr = new ConditionalExpr(firstToken, condition, trueExp, falseExp);
                 }
-            }
+            //}
         }
         return currExpr;
 
     }
     public Expr LogicalOrExpr()//LogicalAndExpr ( '|' LogicalAndExpr)*
     {
-        Expr currExpr = logicalAndExpr();
+        IToken firstToken = currToken;
 
+        Expr left = null;
+        Expr right = null;
+
+        left = logicalAndExpr();
         while(isKind(Kind.OR))
         {
+            IToken op = currToken;
             consume();
-            logicalAndExpr();
+            right = logicalAndExpr();
+            left = new BinaryExpr(firstToken, left, op, right);
         }
-        return currExpr;
+        return left;
+
     }
     public Expr logicalAndExpr()
     {
-        Expr currExpr = comparisonExpr();
+        IToken firstToken = currToken;
 
+        Expr left = null;
+        Expr right = null;
+
+        left = comparisonExpr();
         while(isKind(Kind.AND))
         {
+            IToken op = currToken;
             consume();
-            comparisonExpr();
-        }
+            right = comparisonExpr();
 
-        return currExpr;
+            left = new BinaryExpr(firstToken, left, op, right);
+        }
+        return left;
+
     }
 
     public Expr comparisonExpr()
     {
-        Expr currExpr = additiveExpr();
+        IToken firstToken = currToken;
 
+        Expr left = null;
+        Expr right = null;
+
+        left = additiveExpr();
         while(isKind(Kind.LT) || isKind(Kind.GT) || isKind(Kind.EQUALS) || isKind(Kind.NOT_EQUALS) || isKind(Kind.LE) || isKind(Kind.GE))
         {
+            IToken op = currToken;
             consume();
-            additiveExpr();
+            right = additiveExpr();
+            left = new BinaryExpr(firstToken, left, op, right);
         }
-        return currExpr;
+        return left;
+
     }
 
     public Expr additiveExpr()
@@ -116,7 +141,12 @@ public class Parser implements IParser{
         {
             IToken op = currToken;
             consume();
+
             right = multiplicativeExpr();
+            if(right==null){
+                error =true;
+                //throw new LexicalException("lexical error");
+            }
             left = new BinaryExpr(firstToken, left, op, right);
         }
         return left;
@@ -160,15 +190,18 @@ public class Parser implements IParser{
     }
 
     public Expr unaryExprPostfix()
-    {
-        Expr currExpr = primaryExpr();
+    {   IToken firstToken = currToken;
+        //Expr currExpr = primaryExpr();
+        PixelSelector pixel = null;
+        Expr unaryPost = primaryExpr();
         if(isKind(Kind.LSQUARE))
         {
             consume();
-            //pixelSelector();
+            pixel = pixelSelector();
+            unaryPost = new UnaryExprPostfix(firstToken, unaryPost, pixel);
         }
 
-        return currExpr;
+        return unaryPost;
     }
     public Expr primaryExpr() //PrimaryExpr ::=// BOOLEAN_LIT |STRING_LIT |INT_LIT |FLOAT_LIT |IDENT |'(' Expr ')'
 
@@ -191,6 +224,16 @@ public class Parser implements IParser{
         consume();
         //System.out.println("primary expression token after consume(): "+ currToken.getKind() +" "+ currToken.getText());
         return currentExpr;
+    }
+    public PixelSelector pixelSelector(){
+
+        IToken firstToken = currToken;
+        Expr x = expr();
+        match(Kind.COMMA);
+        Expr y = expr();
+        PixelSelector pixel = new PixelSelector(firstToken, x, y);
+        match(Kind.RSQUARE);
+        return pixel;
     }
 
 
@@ -251,8 +294,12 @@ public class Parser implements IParser{
 
     public ASTNode parse() throws PLCException{
        // System.out.println(currentNode);
+        Expr returnExpr = expr();
+        if(error){
+            throw new SyntaxException("Syntax");
+        }
+        return returnExpr;
 
-        return expr();
     }
     ILexer getLexer(String input){
         return CompilerComponentFactory.getLexer(input);
@@ -277,13 +324,15 @@ public class Parser implements IParser{
         try {
 
             currToken = lexer.next();
+            if(currToken.getKind() == Kind.ERROR){
+                throw new LexicalException("Lexical exception");
+            }
 
         } catch (LexicalException e) {
             e.printStackTrace();
         }
     }
-    boolean match(Kind kind)
-    {
+    boolean match(Kind kind)  {
         if(currToken.getKind() == kind)
         {
             System.out.println("matched "+ currToken.getKind());
@@ -291,10 +340,12 @@ public class Parser implements IParser{
             System.out.println("matched and consumed "+ currToken.getKind()+" "+currToken.getText());
             return true;
         }
-        else
-        {
+        else{
+            System.out.println("error set to true");
+            error =true;
             return false;
         }
+
     }
     void SOS() {
         //while (true){
