@@ -13,6 +13,7 @@ public class Lexer implements ILexer {
     int currentToken = -1;
     int indentCheck = 0;
     boolean isQuote = false;
+    int quoteCheck = 0;
     boolean doubleZero = false;
     public Lexer(String input){
         ArrayList<String> lines = new ArrayList<String>();
@@ -48,9 +49,21 @@ public class Lexer implements ILexer {
                     candidate = ' ';
                 }
 
+                if(quoteCheck == 2)
+                {
+                    quoteCheck = 0;
+                }
+
                 if (candidate == '"')
                 {
-                    isQuote = !isQuote;
+                    if (isQuote == false) {
+                        isQuote = true;
+                    }
+                    else if(isQuote == true)
+                    {
+                        isQuote = false;
+                    }
+                    ++quoteCheck;
                 }
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
@@ -121,9 +134,15 @@ public class Lexer implements ILexer {
                         }
 
                     }
-                    else if(isSymbol(candidate) == false && !intLit) {
+                    else if(isSymbol(candidate) == false && !intLit) {//QUOTES and LETTERS end up here
                         stringInput = stringInput + candidate;//Add candidate to string
                         wasSymbol = false;
+
+                        if(quoteCheck == 2)
+                        {
+                            tokens.add(new Token(stringInput, i, 0));
+                            stringInput = spaceReplace(stringInput);
+                        }
 
                     }
                     else if(Character.isDigit(candidate) && intLit){
@@ -151,7 +170,7 @@ public class Lexer implements ILexer {
                         {
 
 
-                            if (!stringInput.isEmpty() && stringInput.charAt(0) != '#' && isSymbol(candidate)==false && intLit==false) {
+                            if (!stringInput.isEmpty() && stringInput.charAt(0) != '#' && candidate != '\"' && isSymbol(candidate)==false && intLit==false) {
 
                                 tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
                             }
