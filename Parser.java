@@ -17,7 +17,11 @@ public class Parser implements IParser{
 
     Parser(String input){
 
+        if(input == "" || isAllWhitespace(input)){
+        errorSyn = true;
+        }
         lexer = getLexer(input);
+
         try {
             currToken = lexer.next();
         } catch (LexicalException e) {
@@ -335,6 +339,20 @@ public class Parser implements IParser{
             return false;
         }
 
+    }
+
+    public boolean isAllWhitespace(String input)
+    {
+        boolean allSpaces = true;
+        for(int i = 0; i < input.length(); ++i)
+        {
+            int currChar = input.charAt((i));
+            if(currChar != ' ' && currChar != 8 && currChar != 9 && currChar != 10 && currChar != 11 && currChar != 12 && currChar != 13)
+            {
+                allSpaces = false;
+            }
+        }
+        return allSpaces;
     }
 
 }
