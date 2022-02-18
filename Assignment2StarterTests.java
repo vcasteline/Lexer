@@ -642,12 +642,96 @@ class Assignment2StarterTests {
 		assertThat("", int_lit4, instanceOf(IntLitExpr.class));
 		assertEquals(4, ((IntLitExpr) int_lit4).getValue());
 	}
+	@DisplayName("nested_if")
+	@Test
+	public void nested_if(TestInfo testInfo) throws Exception{
+		String input = """
+                if(if(z) a else b fi)
+                    x
+                else
+                    y fi
+                """;
+		show("-------------");
+		show(input);
+		Expr ast = (Expr) getAST(input);
+		show(ast);
+		assertThat("", ast, instanceOf(ConditionalExpr.class));
 
+		Expr var = ((ConditionalExpr) ast).getCondition();
+		assertThat("", var, instanceOf(ConditionalExpr.class));
 
+		Expr var2 = ((ConditionalExpr) var).getCondition();
+		assertThat("", var2, instanceOf(IdentExpr.class));
+		assertEquals("z", var2.getText());
 
+		Expr var3 = ((ConditionalExpr) var).getTrueCase();
+		assertThat("", var3, instanceOf(IdentExpr.class));
+		assertEquals("a", var3.getText());
 
+		Expr var4 = ((ConditionalExpr) var).getFalseCase();
+		assertThat("", var4, instanceOf(IdentExpr.class));
+		assertEquals("b", var4.getText());
 
+		Expr var5 = ((ConditionalExpr) ast).getTrueCase();
+		assertThat("", var5, instanceOf(IdentExpr.class));
+		assertEquals("x", var5.getText());
 
-
-
+		Expr var6 = ((ConditionalExpr) ast).getFalseCase();
+		assertThat("", var6, instanceOf(IdentExpr.class));
+		assertEquals("y", var6.getText());
 	}
+
+
+
+	@DisplayName("empty_paren")
+	@Test
+	public void empty_paren(TestInfo testInfo) throws Exception{
+		String input = """
+                ()
+                """;
+		show("-------------");
+		show(input);
+		Exception e = assertThrows(SyntaxException.class, () -> {
+			getAST(input);
+		});
+		show(e);
+	}
+
+
+
+	@DisplayName("simple_paren")
+	@Test
+	public void simple_paren(TestInfo testInfo) throws Exception{
+		String input = """
+                ("hello")
+                """;
+		show("-------------");
+		show(input);
+		Expr ast = (Expr) getAST(input);
+		show(ast);
+		assertThat("", ast, instanceOf(StringLitExpr.class));
+		assertEquals("hello", ((StringLitExpr) ast).getValue());
+	}
+
+	@DisplayName("extra_paren")
+	@Test
+	public void extra_paren(TestInfo testInfo) throws Exception{
+		String input = """
+                (("world"))
+                """;
+		show("-------------");
+		show(input);
+		Expr ast = (Expr) getAST(input);
+		show(ast);
+		assertThat("", ast, instanceOf(StringLitExpr.class));
+		assertEquals("world", ((StringLitExpr) ast).getValue());
+	}
+
+
+
+
+
+
+
+
+}

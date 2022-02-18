@@ -28,13 +28,13 @@ public class Lexer implements ILexer {
 
 
         for(int i=0; i< lines.size(); i++){//Loops through line array
-            System.out.println("input j: "+ stringInput);
+
             if(isAllWhitespace(stringInput)){
                 stringInput="";
             }
             boolean wasSymbol = false;
             String line = lines.get(i);
-            System.out.println("this is the whole line: "+ line);
+
 
             if(line.length() == 0) {
                 break;
@@ -42,22 +42,15 @@ public class Lexer implements ILexer {
             boolean intLit = Character.isDigit(line.charAt(0));
             int lineSize = lines.get(i).length();
             for(int j = 0; j < lineSize; ++j) {//Iterates through individual strings
-               // if(line.charAt(0)==47){
 
-                    //System.out.println("true");
-                //}
 
                 char candidate = line.charAt(j);
                 int ascii = candidate;
 
-//                if(instaBreak){
-//                    instaBreak = false;
-//                    continue;
-//                }
+
                 if(candidate=='\\'){
                     instaBreak =true;
                     stringInput+=candidate;
-                    System.out.println("line at j+1 "+ line.charAt(j+1));
                     continue;
                 }
                 if(ascii==9){
@@ -201,10 +194,8 @@ public class Lexer implements ILexer {
                         if((j == lineSize-1 && isAllWhitespace(stringInput)==false) || (j == lineSize-1 && wasSymbol))//we ARE at the end of line and NOT a symbol
                         {
 
-                            System.out.println("made it, baby!!!!");
 
                             if (!stringInput.isEmpty() && line.charAt(0) != '#' && candidate != '\"' && isSymbol(candidate)==false && intLit==false) {
-                                System.out.println("made it, baby?????");
 
                                 tokens.add(new Token(stringInput, i, 0)); //If we get to the end of line, send stringInput as a token
                             }
@@ -215,7 +206,6 @@ public class Lexer implements ILexer {
                         }
                         else if(candidate == '#' && stringInput.isEmpty() == false)
                     {
-                        System.out.println("made it, baby!");
                         tokens.add(new Token(stringInput, i, 0));
                         stringInput="";
                         break;

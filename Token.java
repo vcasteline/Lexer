@@ -27,7 +27,6 @@ public class Token implements IToken {
 
         input = clearWhiteSpace(input);
         this.input = input;
-        System.out.println("token input: " + input);
 
         if(input.charAt(0) == '\"'){
             kind = Kind.STRING_LIT;
@@ -219,7 +218,7 @@ public class Token implements IToken {
 //        System.out.println("input:"+ input);
 //        System.out.println("line:"+ this.line);
 //        System.out.println("col:"+ this.col);
-      System.out.println("token:" + kind + " " + input);
+      //System.out.println("token:" + kind + " " + input);
 
     }
     //returns the token kind
@@ -369,41 +368,7 @@ public class Token implements IToken {
 
         return inputString;
     }
-//    String escape(String inputString){
-//        int loopLength = inputString.length();
-//        StringBuilder sb = new StringBuilder(inputString);
-//        for(int i = 0; i < loopLength; i++){
-//            if(inputString.charAt(i) == '\\' ){
-//
-//
-//                if(isEscape(inputString.charAt(i+1))==false) {
-//                    if(inputString.charAt(i+1) == '\\')
-//                    {
-//                       // String newString = inputString.substring(0,i-1) + '@' + inputString.substring(i+1);
-//                       // ++i;
-//                    }
-//                    else {
-//                        kind = Kind.ERROR;
-//                    }
-//                }
-//
-//                    else
-//                    {
-//                        System.out.println("about to break");
-//                        String newString = inputString.substring(0,i-1) + '@' + inputString.substring(i+1);
-//                        inputString = newString;
-//                        System.out.println("broke");
-//
-//                    }
-//                    //inputString.replaceFirst("\\" , "");
-//                    //sb.deleteCharAt(i);
-//                   // System.out.println("escapeCheck:" + inputString.charAt(i) + inputString.charAt(i+1) + "i: " + i);
-//                }
-//        }
-//        //inputString = sb.toString();
-//        System.out.println(("after replacemene: " + inputString));
-//        return inputString;
-//    }
+
 
     boolean isEscape(char candidate){//Use this function to check if a string is a protected word
         for(int i = 0; i < escapes.length; ++i)
