@@ -43,7 +43,44 @@ public class Parser implements IParser{
         return returnExpr;
 
     }
+    public Program program(){
+        if(isKind(Kind.TYPE) || isKind(Kind.OR)){
+            consume();
+            make ident;
+            match(Kind.LPAREN);
+            //check for something here
+            match(Kind.RPAREN);
+            if(is declaration){
+                declaration();
+                match(Kind.SEMI);
 
+            }else if(is statement){
+                statement();
+                match(Kind.SEMI);
+            }
+        }
+    }
+    public NameDef nameDef(){
+        match(Kind.TYPE);
+        if(isKind(Kind.IDENT)){
+            NameDef
+        }else{
+            dimension();
+            make ident;
+            NameDefWithDim
+        }
+    }
+    public Declaration declaration(){
+        nameDef()
+        if(isKind(Kind.EQUALS)){
+            consume();
+            //expr()
+        }
+        else if(isKind(Kind.LARROW)){
+            consume();
+            //expr();
+        }
+    }
     public Expr expr()//::=ConditionalExpr | LogicalOrExpr
     {
         Expr currExpr = null;
@@ -225,6 +262,8 @@ public class Parser implements IParser{
             case FLOAT_LIT -> currentExpr = new FloatLitExpr(currToken);
             case INT_LIT -> currentExpr = new IntLitExpr(currToken);
             case IDENT -> currentExpr = new IdentExpr(currToken);
+            case COLOR_CONST -> currentExpr = new ColorConstExpr(currToken);
+            case KW_CONSOLE -> currentExpr = new ConsoleExpr(currToken);
         }
 
         //CONSUME
@@ -234,9 +273,16 @@ public class Parser implements IParser{
             currentExpr = expr();
             match(Kind.RPAREN);
 
-        }else{
+        } else if (isKind(Kind.LANGLE)){
+            consume();
+            //expressions for Red blue and green
+            match(Kind.RANGLE);
+        }
+        else{
             consume();
         }
+
+
 
         return currentExpr;
     }
@@ -250,7 +296,26 @@ public class Parser implements IParser{
         match(Kind.RSQUARE);
         return pixel;
     }
-
+    public Dimension dimension(){
+       // same as pixelselector
+    }
+    public Statement statement() {
+        if(Statement contains =){
+            AssignmentStatement
+        }
+        else if(Statement <-){
+            ReadStatement
+        }
+        else if(->){
+            WriteStatement
+        }
+        else if(^){
+            ReturnStatement
+        }
+        else{
+            error
+        }
+    }
 
 
     void term()  // term ::= factor ( ( * | / )  factor )*
