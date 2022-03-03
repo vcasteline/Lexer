@@ -218,7 +218,7 @@ public class Token implements IToken {
 //        System.out.println("input:"+ input);
 //        System.out.println("line:"+ this.line);
 //        System.out.println("col:"+ this.col);
-      //System.out.println("token:" + kind + " " + input);
+      System.out.println("token:" + kind + " " + input);
 
     }
     //returns the token kind

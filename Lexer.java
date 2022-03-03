@@ -1,5 +1,6 @@
 package edu.ufl.cise.plc;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +10,7 @@ import java.util.Scanner;
 public class Lexer implements ILexer {
     ArrayList<Token> tokens = new ArrayList<Token>();
     char[] Symbols = {'=', '<', '>', '!', '-'};
+    String[] combos = {"==", "<=", ">=", "!=", "->", "->", "<-", "<<", ">>"};
     char [] escapes = {'\\', 'b', 't', 'n', 'f', 'r', '\"', '\''};
     int currentToken = -1;
     int indentCheck = 0;
@@ -34,17 +36,20 @@ public class Lexer implements ILexer {
             }
             boolean wasSymbol = false;
             String line = lines.get(i);
+            System.out.println(line);
 
 
             if(line.length() == 0) {
                 break;
             }
-            boolean intLit = Character.isDigit(line.charAt(0));
+            boolean intLit = intCheck(line);
             int lineSize = lines.get(i).length();
+
             for(int j = 0; j < lineSize; ++j) {//Iterates through individual strings
 
 
                 char candidate = line.charAt(j);
+                intLit = intCheck(stringInput + candidate);
                 int ascii = candidate;
 
 
@@ -59,37 +64,66 @@ public class Lexer implements ILexer {
                     candidate = ' ';
                 }
 
-                if(quoteCheck == 2)
-                {
-                    quoteCheck = 0;
-                }
+//                if(quoteCheck == 2)
+//                {
+//                    quoteCheck = 0;
+//                }
 
-                if (candidate == '"')
-                {
-                    if (isQuote == false) {
-                        isQuote = true;
-                        int lastQuote = line.lastIndexOf('\"');
+                if(candidate == '"') {
+                        ++quoteCheck;
+                    }
 
-                        if(lastQuote==j){
-                            stringInput+="@";
+
+
+                    if(quoteCheck != 0)
+                    {
+                        if(quoteCheck == 2 && line.charAt(j-1) != '\\')
+                        {
+                            stringInput = stringInput + candidate;
                             tokens.add(new Token(stringInput, i, j)); //Send stringInput as a token
-                            stringInput="";
+                            quoteCheck = 0;
+                            stringInput = spaceReplace(stringInput);
                             continue;
                         }
+                        else if(quoteCheck == 2 && line.charAt(j-1) == '\\'){
+                            --quoteCheck;
+                            stringInput = stringInput + candidate;
+                            continue;
+                        }
+                        else {
+                            stringInput = stringInput + candidate;
+                            continue;
+                        }
+                    }
 
-                        stringInput+=line.substring(j, lastQuote+1);
-                        tokens.add(new Token(stringInput, i, j));
-                        stringInput = spaceReplace(stringInput);
-                        isQuote=false;
-                        j = lastQuote;
-                        continue;
-                    }
-                    else if(isQuote == true)
-                    {
-                        isQuote = false;
-                    }
-                    ++quoteCheck;
-                }
+
+
+//                if (candidate == '"')
+///               {
+////                    if (isQuote == false) {
+////                        isQuote = true;
+////                        int nextQuote = line.indexOf('\"', j+1);
+////
+////                        if(nextQuote==-1){
+////                            stringInput+="@";
+////                            tokens.add(new Token(stringInput, i, j)); //Send stringInput as a token
+////                            stringInput="";
+////                            continue;
+////                        }
+////
+////                        stringInput+=line.substring(j, nextQuote+1);
+////                        tokens.add(new Token(stringInput, i, j));
+////                        stringInput = spaceReplace(stringInput);
+////                        isQuote=false;
+////                        j = nextQuote;
+////                        continue;
+////                    }
+//                    else if(isQuote == true)
+//                    {
+//                        isQuote = false;
+//                    }
+//                    ++quoteCheck;
+//                }
                 boolean letterOrDigit = Character.isLetterOrDigit(candidate);
 
                 if (letterOrDigit == false && candidate != ' ' && candidate != '\"'&& candidate != '#' && !isSymbol(candidate) && candidate!='_') {//Letter, numbers, spaces, and # do not enter here
@@ -117,7 +151,7 @@ public class Lexer implements ILexer {
                     }
                     else if (isSymbol(candidate))
                     {
-                        if(isSymbol(line.charAt(j+1))) {
+                        if(isSymbol(line.charAt(j+1)) && isCombo(candidate, line.charAt(j+1)) == true) {
                             stringInput =  stringInput + candidate + line.charAt(j+1);
 
                             tokens.add(new Token(stringInput, i, 0)); //If stringInput is ==, send it as token
@@ -162,7 +196,6 @@ public class Lexer implements ILexer {
                     else if(isSymbol(candidate) == false && !intLit && candidate != '#') {//QUOTES and LETTERS end up here
                         stringInput = stringInput + candidate;//Add candidate to string
                         wasSymbol = false;
-
                         if(quoteCheck == 2)
                         {
                             tokens.add(new Token(stringInput, i, 0));
@@ -206,9 +239,16 @@ public class Lexer implements ILexer {
                         }
                         else if(candidate == '#' && stringInput.isEmpty() == false)
                     {
-                        tokens.add(new Token(stringInput, i, 0));
-                        stringInput="";
-                        break;
+                        if(isAllWhitespace(stringInput) == false) {
+                            System.out.println("Should be here: " + stringInput);
+                            tokens.add(new Token(stringInput, i, 0));
+                            stringInput = "";
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
 
                 }
@@ -249,6 +289,17 @@ public class Lexer implements ILexer {
         return returnString;
     }
 
+    public boolean isCombo(char first, char second) {
+        String combo = "";
+        combo = combo + first + second;
+
+        for(int i = 0; i < combos.length; ++i){
+            if(combos[i].equals(combo))
+                return true;
+        }
+        return false;
+    }
+
     public boolean isAllWhitespace(String input)
     {
         boolean allSpaces = true;
@@ -270,6 +321,22 @@ public class Lexer implements ILexer {
             if(candidate == Symbols[i])
             {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean intCheck(String input)
+    {
+        for(int i =0; i < input.length(); ++i)
+        {
+            if(input.charAt(i) != ' ')
+            {
+                if(Character.isDigit(input.charAt(i)))
+                {
+                    return true;
+                }
+                return false;
             }
         }
         return false;

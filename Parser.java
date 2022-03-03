@@ -5,6 +5,10 @@ package edu.ufl.cise.plc;
 import edu.ufl.cise.plc.ast.*;
 import edu.ufl.cise.plc.IToken.Kind;
 
+import javax.swing.plaf.nimbus.State;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class Parser implements IParser{
 
@@ -31,7 +35,8 @@ public class Parser implements IParser{
     }
 
     public ASTNode parse() throws PLCException{
-        Expr returnExpr = expr();
+        //Expr returnExpr = expr();
+        Program returnProgram = program();
 
         if(errorLex){
             throw new LexicalException("Lexical");
@@ -40,46 +45,106 @@ public class Parser implements IParser{
             throw new SyntaxException("Syntax");
         }
 
-        return returnExpr;
+        return returnProgram;
 
     }
-    public Program program(){
-        if(isKind(Kind.TYPE) || isKind(Kind.OR)){
-            consume();
-            make ident;
-            match(Kind.LPAREN);
-            //check for something here
-            match(Kind.RPAREN);
-            if(is declaration){
-                declaration();
-                match(Kind.SEMI);
+    public Program program() throws LexicalException {
 
-            }else if(is statement){
-                statement();
-                match(Kind.SEMI);
-            }
+        IToken firstToken = currToken;
+        Types.Type returnType = null;
+        String name = "";
+        List<NameDef> params = new ArrayList<>();
+        List<ASTNode> decsAndStatements = new ArrayList<>();
+
+        if(isKind(Kind.TYPE) || isKind(Kind.KW_VOID)){
+
+            returnType = Types.Type.toType(currToken.getText());
+            System.out.println("returnType: " + returnType);
+            consume();
+
+            name = currToken.getText();
+            System.out.println("name: " + name);
+
+            consume();
+
+            match(Kind.LPAREN);
+            System.out.println("matched: LParen");
+
+            while(!isKind(Kind.RPAREN)) {
+                print("entered here");
+               params.add(nameDef());
+               consume();
+                print("here here");
+
+
+                if(isKind(Kind.COMMA)){
+                   consume();
+               }
+           }
+            print("matching RParen");
+            match(Kind.RPAREN);
+
+           while(isKind(Kind.EOF) == false) {
+               System.out.println("here now");
+
+               if (isKind(Kind.TYPE)) {
+                   decsAndStatements.add(declaration());
+                   //consume();
+                   System.out.println("Just consumed declaration. Currtoken is now: " + currToken.getKind());
+                   match(Kind.SEMI);
+                   System.out.println("added Declaration" + currToken.getText());
+
+               } else //TO DO: Change to else if to specifically check for declarations
+               {
+                   decsAndStatements.add(statement());
+                   //consume();
+
+                   match(Kind.SEMI);
+                   System.out.println("added statement" + currToken.getText());
+
+               }
+           }
         }
+        return new Program(firstToken, returnType, name, params, decsAndStatements);
     }
     public NameDef nameDef(){
+        IToken firstToken = currToken;
+        IToken type = currToken;
+
         match(Kind.TYPE);
+
+        IToken name;
+        Dimension dim;
+        NameDef nameDefinition;
+
+
         if(isKind(Kind.IDENT)){
-            NameDef
-        }else{
-            dimension();
-            make ident;
-            NameDefWithDim
+            name = currToken;
+            nameDefinition = new NameDef(firstToken, type, name);
         }
+        else{
+            match(Kind.LSQUARE);
+            dim = dimension();
+            name = currToken;
+            nameDefinition = new NameDefWithDim(firstToken,type,name,dim);
+        }
+
+        return nameDefinition;
     }
+
     public Declaration declaration(){
-        nameDef()
-        if(isKind(Kind.EQUALS)){
+        NameDef namedefinition = nameDef();
+        IToken firstToken = currToken;
+        consume();
+        IToken op = null;
+        Expr expr = null;
+
+        if(isKind(Kind.ASSIGN) || isKind(Kind.LARROW)){
+            op = currToken;
             consume();
-            //expr()
+            expr = expr();
         }
-        else if(isKind(Kind.LARROW)){
-            consume();
-            //expr();
-        }
+        return new VarDeclaration(firstToken,namedefinition,op,expr);
     }
     public Expr expr()//::=ConditionalExpr | LogicalOrExpr
     {
@@ -255,6 +320,7 @@ public class Parser implements IParser{
     {
         Expr currentExpr = null;
         Kind tokenKind = currToken.getKind();
+        IToken firstToken = currToken;
 
         switch (tokenKind) {
             case BOOLEAN_LIT -> currentExpr = new BooleanLitExpr(currToken);
@@ -276,7 +342,15 @@ public class Parser implements IParser{
         } else if (isKind(Kind.LANGLE)){
             consume();
             //expressions for Red blue and green
+            Expr red = expr();
+            match(Kind.COMMA);
+            Expr green = expr();
+            match(Kind.COMMA);
+            Expr blue = expr();
+
             match(Kind.RANGLE);
+
+            currentExpr = new ColorExpr(firstToken, red, blue, green);
         }
         else{
             consume();
@@ -298,23 +372,57 @@ public class Parser implements IParser{
     }
     public Dimension dimension(){
        // same as pixelselector
+        IToken firstToken = currToken;
+        Expr x = expr();
+        match(Kind.COMMA);
+        Expr y = expr();
+        Dimension dimen = new Dimension(firstToken,x ,y);
+        match(Kind.RSQUARE);
+        return dimen;
     }
     public Statement statement() {
-        if(Statement contains =){
-            AssignmentStatement
+        IToken firstToken = currToken;
+        PixelSelector pixel = null;
+        Statement statement = null;
+
+        if(isKind(Kind.IDENT)){
+            String name = currToken.getText();
+            consume();
+            //Check fo a PixelSelector
+            if(isKind(Kind.LSQUARE)){
+                consume();
+                pixel = pixelSelector();
+            }
+                if(isKind(Kind.ASSIGN))
+                {
+                  consume();
+                  Expr expression = expr();
+                  statement = new AssignmentStatement(firstToken, name, pixel, expression );
+                }
+                else if(isKind(Kind.LARROW)){
+                    consume();
+                    Expr expression = expr();
+                    statement = new ReadStatement(firstToken, name, pixel, expression );
+                }
         }
-        else if(Statement <-){
-            ReadStatement
+        else if(isKind(Kind.KW_WRITE)){
+           consume();
+           Expr source = expr();
+           match(Kind.RARROW);
+           Expr dest = expr();
+           statement = new WriteStatement(firstToken, source, dest);
         }
-        else if(->){
-            WriteStatement
+        else if(isKind(Kind.RETURN)){
+            consume();
+            Expr expression = expr();
+            statement = new ReturnStatement(firstToken, expression);
         }
-        else if(^){
-            ReturnStatement
-        }
-        else{
-            error
-        }
+//        else{
+//            print("Statement error");
+//            errorSyn = true;
+//        }
+
+        return  statement;
     }
 
 
@@ -366,13 +474,15 @@ public class Parser implements IParser{
 
     void consume()
     {
+        System.out.println("Trying to consume: " + currToken.getText());
 
         try {
 
             if(currToken.getKind()==Kind.EOF){
 
-
+                print("EOF error");
                 throw new SyntaxException("syntax exception");
+
 
             }
 
@@ -400,10 +510,16 @@ public class Parser implements IParser{
             return true;
         }
         else{
+            print("Match error: Should be: " + kind + ", but is " + currToken.getKind());
             errorSyn=true;
             return false;
         }
 
+    }
+
+    public void print(String toPrint)
+    {
+        System.out.println(toPrint);
     }
 
     public boolean isAllWhitespace(String input)
