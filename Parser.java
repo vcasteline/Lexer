@@ -63,12 +63,18 @@ public class Parser implements IParser{
             consume();
 
             name = currToken.getText();
+            match(Kind.IDENT);
+
+
+
             System.out.println("name: " + name);
 
-            consume();
+            //consume();
 
             match(Kind.LPAREN);
             System.out.println("matched: LParen");
+
+            if(errorSyn == true){return null;}
 
             while(!isKind(Kind.RPAREN)) {
                 print("entered here");
@@ -84,7 +90,7 @@ public class Parser implements IParser{
             print("matching RParen");
             match(Kind.RPAREN);
 
-           while(isKind(Kind.EOF) == false) {
+           while(isKind(Kind.EOF) == false && errorSyn == false) {
                System.out.println("here now");
 
                if (isKind(Kind.TYPE)) {
@@ -94,17 +100,23 @@ public class Parser implements IParser{
                    match(Kind.SEMI);
                    System.out.println("added Declaration" + currToken.getText());
 
-               } else //TO DO: Change to else if to specifically check for declarations
+               }
+               else //TO DO: Change to else if to specifically check for declarations
                {
-                   decsAndStatements.add(statement());
-                   //consume();
-
-                   match(Kind.SEMI);
-                   System.out.println("added statement" + currToken.getText());
+                   if(isKind(Kind.IDENT) || isKind(Kind.KW_WRITE) || isKind(Kind.RETURN))
+                   {
+                       decsAndStatements.add(statement());
+                       match(Kind.SEMI);
+                       System.out.println("added statement" + currToken.getText());
+                   }
+                   else {
+                       errorSyn = true;
+                   }
 
                }
            }
         }
+        else{errorSyn = true;}
         return new Program(firstToken, returnType, name, params, decsAndStatements);
     }
     public NameDef nameDef(){
@@ -403,6 +415,9 @@ public class Parser implements IParser{
                     consume();
                     Expr expression = expr();
                     statement = new ReadStatement(firstToken, name, pixel, expression );
+                }
+                else {
+                    errorSyn = true;
                 }
         }
         else if(isKind(Kind.KW_WRITE)){
