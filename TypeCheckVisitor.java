@@ -54,19 +54,27 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws Exception {
 		booleanLitExpr.setType(Type.BOOLEAN);
+		System.out.println("Visited Bool");
+
 		return Type.BOOLEAN;
 	}
 
 	@Override
 	public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+
+		stringLitExpr.setType(Type.STRING);
+		System.out.println("Visited string");
+		return Type.STRING;
+
 	}
 
 	@Override
 	public Object visitIntLitExpr(IntLitExpr intLitExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		intLitExpr.setType(Type.INT);
+		System.out.println("Visited Int");
+
+		return INT;
+		//throw new UnsupportedOperationException("Unimplemented Int visit method.");
 	}
 
 	@Override
@@ -77,8 +85,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+
+		colorConstExpr.setType(Type.COLOR);
+		System.out.println("Visited colorConst");
+		return COLOR;
 	}
 
 	@Override
@@ -137,13 +147,17 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		throw new UnsupportedOperationException("Unimplemented Binary visit method.");
 	}
 
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		//identExpr.setType(Type.);
+		//throw new UnsupportedOperationException("Unimplemented Ident visit method.");
+
+		System.out.print("ident");
+		throw new UnsupportedOperationException("Unimplemented Ident visit method.");
 	}
 
 	@Override
@@ -175,7 +189,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//Work incrementally and systematically, testing as you go.  
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		throw new UnsupportedOperationException("Unimplemented Assignent visit method.");
 	}
 
 
@@ -192,27 +206,42 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+		throw new UnsupportedOperationException("Unimplemented read visit method.");
 	}
 
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented visit method.");
+
+		throw new UnsupportedOperationException("Unimplemented declaration visit method.");
 	}
 
 
 	@Override
 	public Object visitProgram(Program program, Object arg) throws Exception {		
 		//TODO:  this method is incomplete, finish it.  
-		
+
 		//Save root of AST so return type can be accessed in return statements
 		root = program;
-		
+
+		//Check Params
+		List<NameDef> params = program.getParams();
+		for (NameDef node : params) {
+
+			node.visit(this, arg);
+
+
+		}
+
+
 		//Check declarations and statements
 		List<ASTNode> decsAndStatements = program.getDecsAndStatements();
+
 		for (ASTNode node : decsAndStatements) {
+
 			node.visit(this, arg);
+
+
 		}
 		return program;
 	}
@@ -220,7 +249,20 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitNameDef(NameDef nameDef, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException();
+		System.out.println("namedef");
+		System.out.println(	nameDef.getName());
+		System.out.println(	nameDef.getType());
+
+		if(SymbolTable.Map.containsKey(nameDef.getName()) == true)
+		{
+			throw new TypeCheckException("Cannot have two parameters of the same name");
+		}
+
+		symbolTable.Map.put(nameDef.getName(), nameDef);
+
+		//throw new UnsupportedOperationException();
+
+		return nameDef.getType();
 	}
 
 	@Override

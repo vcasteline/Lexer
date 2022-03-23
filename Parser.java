@@ -59,7 +59,7 @@ public class Parser implements IParser{
         if(isKind(Kind.TYPE) || isKind(Kind.KW_VOID)){
 
             returnType = Types.Type.toType(currToken.getText());
-            System.out.println("returnType: " + returnType);
+         //   System.out.println("returnType: " + returnType);
             consume();
 
             name = currToken.getText();
@@ -67,38 +67,38 @@ public class Parser implements IParser{
 
 
 
-            System.out.println("name: " + name);
+          //  System.out.println("name: " + name);
 
             //consume();
 
             match(Kind.LPAREN);
-            System.out.println("matched: LParen");
+           // System.out.println("matched: LParen");
 
             if(errorSyn == true){return null;}
 
             while(!isKind(Kind.RPAREN)) {
-                print("entered here");
+
                params.add(nameDef());
                consume();
-                print("here here");
+
 
 
                 if(isKind(Kind.COMMA)){
                    consume();
                }
            }
-            print("matching RParen");
+            //print("matching RParen");
             match(Kind.RPAREN);
 
            while(isKind(Kind.EOF) == false && errorSyn == false) {
-               System.out.println("here now");
+              // System.out.println("here now");
 
                if (isKind(Kind.TYPE)) {
                    decsAndStatements.add(declaration());
                    //consume();
-                   System.out.println("Just consumed declaration. Currtoken is now: " + currToken.getKind());
+                  // System.out.println("Just consumed declaration. Currtoken is now: " + currToken.getKind());
                    match(Kind.SEMI);
-                   System.out.println("added Declaration" + currToken.getText());
+                  // System.out.println("added Declaration" + currToken.getText());
 
                }
                else //TO DO: Change to else if to specifically check for declarations
@@ -107,7 +107,7 @@ public class Parser implements IParser{
                    {
                        decsAndStatements.add(statement());
                        match(Kind.SEMI);
-                       System.out.println("added statement" + currToken.getText());
+                   // System.out.println("added statement" + currToken.getText());
                    }
                    else {
                        errorSyn = true;
@@ -489,7 +489,7 @@ public class Parser implements IParser{
 
     void consume()
     {
-        System.out.println("Trying to consume: " + currToken.getText());
+        //System.out.println("Trying to consume: " + currToken.getText());
 
         try {
 
