@@ -153,11 +153,25 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws Exception {
 		//TODO:  implement this method
+		String name = identExpr.getText();
 		//identExpr.setType(Type.);
 		//throw new UnsupportedOperationException("Unimplemented Ident visit method.");
 
-		System.out.print("ident");
-		throw new UnsupportedOperationException("Unimplemented Ident visit method.");
+		System.out.println("ident: " + name);
+
+
+		if(SymbolTable.map.containsKey(name) == true)
+		{
+			System.out.println("Entered");
+			identExpr.setType(SymbolTable.Search(name).getType());
+			identExpr.setDec(SymbolTable.Search(name));
+			System.out.println(SymbolTable.Search(name).getType());
+			return SymbolTable.Search(name).getType();
+		}
+
+
+		//throw new UnsupportedOperationException("Unimplemented Ident visit method.");
+		return identExpr.getType();
 	}
 
 	@Override
@@ -213,7 +227,29 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 		//TODO:  implement this method
 
-		throw new UnsupportedOperationException("Unimplemented declaration visit method.");
+		String name = declaration.getName();
+		System.out.println("vardeclaration: " + name);
+
+		//Check if Var is in the Map
+		if(SymbolTable.map.containsKey(name) == true)
+		{
+			throw new TypeCheckException("Cannot have two vars of the same name");
+		}
+
+		//Add Var to the map
+		SymbolTable.map.put(name, declaration);
+
+
+		if(SymbolTable.Search(name).getType() != declaration.getExpr().visit(this, arg))
+		{
+			System.out.println(SymbolTable.Search(name).getType());
+			System.out.println(declaration.getExpr().visit(this, arg));
+
+			throw new TypeCheckException("mismatched types");
+		}
+		//throw new UnsupportedOperationException("Unimplemented declaration visit method.");
+
+		return declaration.getType();
 	}
 
 
@@ -249,16 +285,17 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitNameDef(NameDef nameDef, Object arg) throws Exception {
 		//TODO:  implement this method
-		System.out.println("namedef");
-		System.out.println(	nameDef.getName());
-		System.out.println(	nameDef.getType());
+		String name = nameDef.getName();
 
-		if(SymbolTable.Map.containsKey(nameDef.getName()) == true)
+		System.out.println("namedef: " + name);
+
+
+		if(SymbolTable.map.containsKey(nameDef.getName()) == true)
 		{
 			throw new TypeCheckException("Cannot have two parameters of the same name");
 		}
 
-		symbolTable.Map.put(nameDef.getName(), nameDef);
+		symbolTable.map.put(nameDef.getName(), nameDef);
 
 		//throw new UnsupportedOperationException();
 
