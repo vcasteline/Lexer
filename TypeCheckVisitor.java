@@ -156,15 +156,20 @@ public class TypeCheckVisitor implements ASTVisitor {
 		String name = identExpr.getText();
 		//identExpr.setType(Type.);
 		//throw new UnsupportedOperationException("Unimplemented Ident visit method.");
-
+		System.out.println("IDENT!!!");
 		System.out.println("ident: " + name);
 
-
+		//Check if map contains the Ident
 		if(SymbolTable.map.containsKey(name) == true)
 		{
 			System.out.println("Entered");
 			identExpr.setType(SymbolTable.Search(name).getType());
 			identExpr.setDec(SymbolTable.Search(name));
+
+			if(identExpr.getDec().isInitialized() == false)
+			{
+				throw new TypeCheckException("Ident has not been initialized");
+			}
 			System.out.println(SymbolTable.Search(name).getType());
 			return SymbolTable.Search(name).getType();
 		}
@@ -226,8 +231,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 		//TODO:  implement this method
-
+		boolean coerced = false;
 		String name = declaration.getName();
+		Type decType = (Type)declaration.getExpr().visit(this, arg);
+
 		System.out.println("vardeclaration: " + name);
 
 		//Check if Var is in the Map
@@ -239,15 +246,35 @@ public class TypeCheckVisitor implements ASTVisitor {
 		//Add Var to the map
 		SymbolTable.map.put(name, declaration);
 
-
-		if(SymbolTable.Search(name).getType() != declaration.getExpr().visit(this, arg))
+		//Check if declaration expr() is null.  If it is, the var has not been initialized
+		if(declaration.getExpr() != null)
 		{
-			System.out.println(SymbolTable.Search(name).getType());
-			System.out.println(declaration.getExpr().visit(this, arg));
-
-			throw new TypeCheckException("mismatched types");
+			declaration.setInitialized(true);
 		}
-		//throw new UnsupportedOperationException("Unimplemented declaration visit method.");
+
+
+
+
+		//System.out.println("got it here");
+
+
+
+		//Check if type in the symbol table matches with type of RHS of declaration
+		if(declaration.isInitialized() &&  SymbolTable.Search(name).getType() != decType)
+		{
+			//If a float and an int, coerce
+			if(decType == INT && SymbolTable.Search(name).getType() == FLOAT)
+			{
+				declaration.getExpr().setCoerceTo(FLOAT);
+				System.out.println("coreced");
+				coerced = true;
+			}
+
+			if(coerced == false) {
+				throw new TypeCheckException("mismatched types");
+			}
+		}
+
 
 		return declaration.getType();
 	}
@@ -277,8 +304,9 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 			node.visit(this, arg);
 
-
 		}
+
+
 		return program;
 	}
 
@@ -295,6 +323,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 			throw new TypeCheckException("Cannot have two parameters of the same name");
 		}
 
+		//Since its a parameter, it is initialized with an incoming value
+		nameDef.setInitialized(true);
 		symbolTable.map.put(nameDef.getName(), nameDef);
 
 		//throw new UnsupportedOperationException();
@@ -310,9 +340,13 @@ public class TypeCheckVisitor implements ASTVisitor {
  
 	@Override
 	public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws Exception {
+		System.out.println("returnging");
 		Type returnType = root.getReturnType();  //This is why we save program in visitProgram.
 		Type expressionType = (Type) returnStatement.getExpr().visit(this, arg);
 		check(returnType == expressionType, returnStatement, "return statement with invalid type");
+		//////////////////////////
+
+		/////////////////////////
 		return null;
 	}
 
