@@ -1,5 +1,6 @@
 package edu.ufl.cise.plc;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,7 @@ import static edu.ufl.cise.plc.ast.Types.Type.*;
 
 public class TypeCheckVisitor implements ASTVisitor {
 
-	SymbolTable symbolTable = new SymbolTable();  
+	SymbolTable symbolTable = new SymbolTable();
 	Program root;
 	
 	record Pair<T0,T1>(T0 t0, T1 t1){};  //may be useful for constructing lookup tables.
@@ -71,7 +72,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitIntLitExpr(IntLitExpr intLitExpr, Object arg) throws Exception {
 		intLitExpr.setType(Type.INT);
-		System.out.println("Visited Int");
+		System.out.println("Visited Int: " + intLitExpr.getValue());
 
 		return INT;
 		//throw new UnsupportedOperationException("Unimplemented Int visit method.");
@@ -101,9 +102,16 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//then checks the given conditions.
 	@Override
 	public Object visitColorExpr(ColorExpr colorExpr, Object arg) throws Exception {
+		System.out.println("ENTERED COLOR TING");
 		Type redType = (Type) colorExpr.getRed().visit(this, arg);
+		System.out.println("Red: " + colorExpr.getRed().getText());
+
 		Type greenType = (Type) colorExpr.getGreen().visit(this, arg);
+		System.out.println("green: " + colorExpr.getGreen().getText());
+
 		Type blueType = (Type) colorExpr.getBlue().visit(this, arg);
+		System.out.println("blue: " + colorExpr.getBlue().getText());
+
 		check(redType == greenType && redType == blueType, colorExpr, "color components must have same type");
 		check(redType == Type.INT || redType == Type.FLOAT, colorExpr, "color component type must be int or float");
 		Type exprType = (redType == Type.INT) ? Type.COLOR : Type.COLORFLOAT;
@@ -146,8 +154,22 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//This method has several cases. Work incrementally and test as you go. 
 	@Override
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
-		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented Binary visit method.");
+		
+		Kind op = binaryExpr.getOp().getKind();
+		Type leftType = (Type) binaryExpr.getLeft().visit(this, arg);
+		Type rightType = (Type) binaryExpr.getRight().visit(this, arg);
+
+		if(op == Kind.AND || op == Kind.OR || op == Kind.EQUALS || op == Kind.NOT_EQUALS || op == Kind.LT || op == Kind.GT || op == Kind.LE || op == Kind.GE)
+		{
+			binaryExpr.setType(BOOLEAN);
+			return BOOLEAN;
+		}
+		else {
+			Type returnType = symbolTable.checkMap(leftType, rightType);
+			check(returnType != null, binaryExpr, "incompatible types for BinaryExpr");
+			binaryExpr.setType(returnType);
+			return returnType;
+		}
 	}
 
 	@Override
@@ -160,18 +182,18 @@ public class TypeCheckVisitor implements ASTVisitor {
 		System.out.println("ident: " + name);
 
 		//Check if map contains the Ident
-		if(SymbolTable.map.containsKey(name) == true)
+		if(symbolTable.map.containsKey(name) == true)
 		{
 			System.out.println("Entered");
-			identExpr.setType(SymbolTable.Search(name).getType());
-			identExpr.setDec(SymbolTable.Search(name));
+			identExpr.setType(symbolTable.Search(name).getType());
+			identExpr.setDec(symbolTable.Search(name));
 
 			if(identExpr.getDec().isInitialized() == false)
 			{
 				throw new TypeCheckException("Ident has not been initialized");
 			}
-			System.out.println(SymbolTable.Search(name).getType());
-			return SymbolTable.Search(name).getType();
+			System.out.println(symbolTable.Search(name).getType());
+			return symbolTable.Search(name).getType();
 		}
 
 
@@ -238,13 +260,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 		System.out.println("vardeclaration: " + name);
 
 		//Check if Var is in the Map
-		if(SymbolTable.map.containsKey(name) == true)
+		if(symbolTable.map.containsKey(name) == true)
 		{
 			throw new TypeCheckException("Cannot have two vars of the same name");
 		}
 
 		//Add Var to the map
-		SymbolTable.map.put(name, declaration);
+		symbolTable.map.put(name, declaration);
 
 		//Check if declaration expr() is null.  If it is, the var has not been initialized
 		if(declaration.getExpr() != null)
@@ -260,10 +282,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 
 		//Check if type in the symbol table matches with type of RHS of declaration
-		if(declaration.isInitialized() &&  SymbolTable.Search(name).getType() != decType)
+		if(declaration.isInitialized() &&  symbolTable.Search(name).getType() != decType)
 		{
 			//If a float and an int, coerce
-			if(decType == INT && SymbolTable.Search(name).getType() == FLOAT)
+			if(decType == INT && symbolTable.Search(name).getType() == FLOAT)
 			{
 				declaration.getExpr().setCoerceTo(FLOAT);
 				System.out.println("coreced");
@@ -312,13 +334,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitNameDef(NameDef nameDef, Object arg) throws Exception {
-		//TODO:  implement this method
+		
 		String name = nameDef.getName();
 
-		System.out.println("namedef: " + name);
+		System.out.println("namedef: " + name + " | Type: " + nameDef.getType());
+		System.out.println(SymbolTable.map.size());
 
 
-		if(SymbolTable.map.containsKey(nameDef.getName()) == true)
+		if(symbolTable.map.containsKey(nameDef.getName()) == true)
 		{
 			throw new TypeCheckException("Cannot have two parameters of the same name");
 		}
@@ -343,6 +366,11 @@ public class TypeCheckVisitor implements ASTVisitor {
 		System.out.println("returnging");
 		Type returnType = root.getReturnType();  //This is why we save program in visitProgram.
 		Type expressionType = (Type) returnStatement.getExpr().visit(this, arg);
+
+		System.out.println("expression type: " + expressionType);
+
+		System.out.println("returnStatement.getExpr().getType: " + returnStatement.getExpr().getType());
+		System.out.println("returnExpr: " + returnStatement.getExpr());
 		check(returnType == expressionType, returnStatement, "return statement with invalid type");
 		//////////////////////////
 

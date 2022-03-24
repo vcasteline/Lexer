@@ -362,7 +362,7 @@ public class Parser implements IParser{
 
             match(Kind.RANGLE);
 
-            currentExpr = new ColorExpr(firstToken, red, blue, green);
+            currentExpr = new ColorExpr(firstToken, red, green, blue);
         }
         else{
             consume();
