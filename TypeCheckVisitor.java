@@ -55,7 +55,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws Exception {
 		booleanLitExpr.setType(Type.BOOLEAN);
-		System.out.println("Visited Bool: " + booleanLitExpr.getText());
+//		System.out.println("Visited Bool: " + booleanLitExpr.getText());
 
 		return Type.BOOLEAN;
 	}
@@ -64,7 +64,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws Exception {
 
 		stringLitExpr.setType(Type.STRING);
-		System.out.println("Visited string");
+//		System.out.println("Visited string");
 		return Type.STRING;
 
 	}
@@ -72,7 +72,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitIntLitExpr(IntLitExpr intLitExpr, Object arg) throws Exception {
 		intLitExpr.setType(Type.INT);
-		System.out.println("Visited Int: " + intLitExpr.getValue());
+//		System.out.println("Visited Int: " + intLitExpr.getValue());
 
 		return INT;
 		//throw new UnsupportedOperationException("Unimplemented Int visit method.");
@@ -88,7 +88,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
 
 		colorConstExpr.setType(Type.COLOR);
-		System.out.println("Visited colorConst");
+//		System.out.println("Visited colorConst");
 		return COLOR;
 	}
 
@@ -102,15 +102,12 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//then checks the given conditions.
 	@Override
 	public Object visitColorExpr(ColorExpr colorExpr, Object arg) throws Exception {
-		System.out.println("ENTERED COLOR TING");
+//		System.out.println("ENTERED COLOR TING");
 		Type redType = (Type) colorExpr.getRed().visit(this, arg);
-		System.out.println("Red: " + colorExpr.getRed().getText());
 
 		Type greenType = (Type) colorExpr.getGreen().visit(this, arg);
-		System.out.println("green: " + colorExpr.getGreen().getText());
 
 		Type blueType = (Type) colorExpr.getBlue().visit(this, arg);
-		System.out.println("blue: " + colorExpr.getBlue().getText());
 
 		check(redType == greenType && redType == blueType, colorExpr, "color components must have same type");
 		check(redType == Type.INT || redType == Type.FLOAT, colorExpr, "color component type must be int or float");
@@ -178,13 +175,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 		String name = identExpr.getText();
 		//identExpr.setType(Type.);
 		//throw new UnsupportedOperationException("Unimplemented Ident visit method.");
-		System.out.println("IDENT!!!");
-		System.out.println("ident: " + name);
+//		System.out.println("IDENT!!!");
+//		System.out.println("ident: " + name);
 
 		//Check if map contains the Ident
 		if(symbolTable.map.containsKey(name) == true)
 		{
-			System.out.println("Entered");
+//			System.out.println("Entered");
 			identExpr.setType(symbolTable.Search(name).getType());
 			identExpr.setDec(symbolTable.Search(name));
 
@@ -192,7 +189,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 			{
 				throw new TypeCheckException("Ident has not been initialized");
 			}
-			System.out.println(symbolTable.Search(name).getType());
+//			System.out.println(symbolTable.Search(name).getType());
 			return symbolTable.Search(name).getType();
 		}
 
@@ -261,10 +258,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 			check(targetType == assignmentStatement.getExpr().getType() || targetType == assignmentStatement.getExpr().getCoerceTo(), assignmentStatement, "Expression must be assignment compatible with target");
 		}
 		else if(targetType == IMAGE && assignmentStatement.getSelector() ==null){
-			System.out.println("i dont have a pixel selector");
-			System.out.println(assignmentStatement.getExpr().getType());
+//			System.out.println("i dont have a pixel selector");
+//			System.out.println(assignmentStatement.getExpr().getType());
 			if(assignmentStatement.getExpr().getType() == INT){
-				System.out.println("should get in here");
+//				System.out.println("should get in here");
 				assignmentStatement.getExpr().setCoerceTo(COLOR);
 			}
 			else if(assignmentStatement.getExpr().getType() == FLOAT){
@@ -326,7 +323,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		boolean coerced = false;
 		String name = declaration.getName();
 
-		System.out.println("vardeclaration: " + name);
+//		System.out.println("vardeclaration: " + name);
 
 		//Check if Var is in the Map
 		if(symbolTable.map.containsKey(name) == true)
@@ -356,7 +353,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 			if(declaration.getExpr().visit(this, arg) == INT && symbolTable.Search(name).getType() == FLOAT)
 			{
 				declaration.getExpr().setCoerceTo(FLOAT);
-				System.out.println("coreced");
+//				System.out.println("coreced");
 				coerced = true;
 			}
 
@@ -405,8 +402,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 		
 		String name = nameDef.getName();
 
-		System.out.println("namedef: " + name + " | Type: " + nameDef.getType());
-		System.out.println(symbolTable.map.size());
+//		System.out.println("namedef: " + name + " | Type: " + nameDef.getType());
+//		System.out.println(symbolTable.map.size());
 
 
 		if(symbolTable.map.containsKey(nameDef.getName()) == true)
@@ -431,15 +428,15 @@ public class TypeCheckVisitor implements ASTVisitor {
  
 	@Override
 	public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws Exception {
-		System.out.println("returnging");
+//		System.out.println("returnging");
 		Type returnType = root.getReturnType();  //This is why we save program in visitProgram.
 		Type expressionType = (Type) returnStatement.getExpr().visit(this, arg);
 
-		System.out.println("expression type: " + expressionType);
-
-		System.out.println("returnStatement.getExpr().getType: " + returnStatement.getExpr().getType());
-		System.out.println("returnExpr: " + returnStatement.getExpr());
-		System.out.println("returnType: " + returnType);
+//		System.out.println("expression type: " + expressionType);
+//
+//		System.out.println("returnStatement.getExpr().getType: " + returnStatement.getExpr().getType());
+//		System.out.println("returnExpr: " + returnStatement.getExpr());
+//		System.out.println("returnType: " + returnType);
 
 		check(returnType == expressionType, returnStatement, "return statement with invalid type");
 		//////////////////////////
