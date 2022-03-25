@@ -55,7 +55,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws Exception {
 		booleanLitExpr.setType(Type.BOOLEAN);
-		System.out.println("Visited Bool");
+		System.out.println("Visited Bool: " + booleanLitExpr.getText());
 
 		return Type.BOOLEAN;
 	}
@@ -204,13 +204,24 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
 		//TODO  implement this method
-		throw new UnsupportedOperationException();
+		Type conditionType = (Type) conditionalExpr.getCondition().visit(this, arg);
+		Type trueCaseType = (Type) conditionalExpr.getTrueCase().visit(this, arg);
+		Type falseCaseType = (Type) conditionalExpr.getFalseCase().visit(this, arg);;
+		check(conditionType==BOOLEAN, conditionalExpr, "Condition type must be BOOLEAN");
+		check(trueCaseType == falseCaseType, conditionalExpr, "Condition Types do not match");
+		conditionalExpr.setType(trueCaseType);
+
+		return trueCaseType;
 	}
 
 	@Override
 	public Object visitDimension(Dimension dimension, Object arg) throws Exception {
 		//TODO  implement this method
-		throw new UnsupportedOperationException();
+		Type widthType = (Type)dimension.getWidth().visit(this, arg);
+		Type heightType = (Type)dimension.getHeight().visit(this, arg);
+		check(widthType == INT && heightType == INT, dimension, "Both arguments in a Dimension must be of type INT" );
+
+		return null;
 	}
 
 	@Override
@@ -230,7 +241,59 @@ public class TypeCheckVisitor implements ASTVisitor {
 	//Work incrementally and systematically, testing as you go.  
 	public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented Assignent visit method.");
+		Declaration targetDec = symbolTable.Search(assignmentStatement.getName());
+		//System.out.println("targetDec" + targetDec);
+
+		Type targetType = symbolTable.Search(assignmentStatement.getName()).getType();
+		assignmentStatement.setTargetDec(targetDec);
+		assignmentStatement.getTargetDec().setInitialized(true);
+		assignmentStatement.getExpr().visit(this, arg);
+		//System.out.println("targetDec " + assignmentStatement.getTargetDec());
+
+		if(targetType!=IMAGE){
+			check(assignmentStatement.getSelector() == null, assignmentStatement, "Cannot have pixel selector if target type is IMAGE" );
+			if(targetType==INT && (assignmentStatement.getExpr().getType() == FLOAT || assignmentStatement.getExpr().getType() == COLOR)  ||
+					targetType==FLOAT && assignmentStatement.getExpr().getType() == INT||
+					targetType==COLOR && assignmentStatement.getExpr().getType() == INT){
+
+				assignmentStatement.getExpr().setCoerceTo(targetType);
+			}
+			check(targetType == assignmentStatement.getExpr().getType() || targetType == assignmentStatement.getExpr().getCoerceTo(), assignmentStatement, "Expression must be assignment compatible with target");
+		}
+		else if(targetType == IMAGE && assignmentStatement.getSelector() ==null){
+			System.out.println("i dont have a pixel selector");
+			System.out.println(assignmentStatement.getExpr().getType());
+			if(assignmentStatement.getExpr().getType() == INT){
+				System.out.println("should get in here");
+				assignmentStatement.getExpr().setCoerceTo(COLOR);
+			}
+			else if(assignmentStatement.getExpr().getType() == FLOAT){
+				assignmentStatement.getExpr().setCoerceTo(COLORFLOAT);
+			}
+//			else if(assignmentStatement.getExpr().getType() == COLOR ||assignmentStatement.getExpr().getType() == COLORFLOAT){
+//				assignmentStatement.getExpr().setCoerceTo(IMAGE);
+//			}
+			check(targetType == assignmentStatement.getExpr().getType() ||  assignmentStatement.getExpr().getCoerceTo() == COLOR || assignmentStatement.getExpr().getCoerceTo() == COLORFLOAT || assignmentStatement.getExpr().getType() == COLOR || assignmentStatement.getExpr().getType() == COLORFLOAT, assignmentStatement, "Expression must be assignment compatible with target");
+
+		}
+		else if(targetType == IMAGE && assignmentStatement.getSelector() !=null){
+			Type xType = assignmentStatement.getSelector().getX().getType();
+			Type yType = assignmentStatement.getSelector().getY().getType();
+			Expr x = assignmentStatement.getSelector().getX();
+			Expr y = assignmentStatement.getSelector().getY();
+
+			check(xType == INT && yType == INT, assignmentStatement, "x and y values must be type INT");
+			check(x instanceof IdentExpr && y instanceof IdentExpr, assignmentStatement,"x and y expressions must be IdentExpressions");
+			check(symbolTable.Search(x.getText()) == null, assignmentStatement,"Name already declared for x, use another name");
+			check(symbolTable.Search(y.getText()) == null, assignmentStatement,"Name already declared for y, use another name");
+			if(assignmentStatement.getExpr().getType() == COLORFLOAT || assignmentStatement.getExpr().getType() == FLOAT || assignmentStatement.getExpr().getType() == INT){
+				assignmentStatement.getExpr().setCoerceTo(COLOR);
+
+			}
+			check(assignmentStatement.getExpr().getType() == COLOR || assignmentStatement.getExpr().getCoerceTo() == COLOR, assignmentStatement, "Right hand side must be of type color, colorfloat, int, or float");
+		}
+
+		return null;
 	}
 
 
@@ -247,7 +310,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 	@Override
 	public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
 		//TODO:  implement this method
-		throw new UnsupportedOperationException("Unimplemented read visit method.");
+		Type targetType = symbolTable.Search(readStatement.getName()).getType();
+		Type rightHand = (Type) readStatement.getSource().visit(this, arg);
+		check(rightHand == CONSOLE || rightHand == STRING, readStatement, "Right hand side must be Type CONSOLE or STRING" );
+		if(targetType!=null){
+			readStatement.setTargetDec(symbolTable.Search(readStatement.getName()));
+			readStatement.getTargetDec().setInitialized(true);
+		}
+		return null;
 	}
 
 	@Override
@@ -255,7 +325,6 @@ public class TypeCheckVisitor implements ASTVisitor {
 		//TODO:  implement this method
 		boolean coerced = false;
 		String name = declaration.getName();
-		Type decType = (Type)declaration.getExpr().visit(this, arg);
 
 		System.out.println("vardeclaration: " + name);
 
@@ -276,16 +345,15 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 
 
-
 		//System.out.println("got it here");
 
 
 
 		//Check if type in the symbol table matches with type of RHS of declaration
-		if(declaration.isInitialized() &&  symbolTable.Search(name).getType() != decType)
+		if(declaration.isInitialized() &&  symbolTable.Search(name).getType() != declaration.getExpr().visit(this, arg))
 		{
 			//If a float and an int, coerce
-			if(decType == INT && symbolTable.Search(name).getType() == FLOAT)
+			if(declaration.getExpr().visit(this, arg) == INT && symbolTable.Search(name).getType() == FLOAT)
 			{
 				declaration.getExpr().setCoerceTo(FLOAT);
 				System.out.println("coreced");
@@ -338,7 +406,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		String name = nameDef.getName();
 
 		System.out.println("namedef: " + name + " | Type: " + nameDef.getType());
-		System.out.println(SymbolTable.map.size());
+		System.out.println(symbolTable.map.size());
 
 
 		if(symbolTable.map.containsKey(nameDef.getName()) == true)
@@ -371,6 +439,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 		System.out.println("returnStatement.getExpr().getType: " + returnStatement.getExpr().getType());
 		System.out.println("returnExpr: " + returnStatement.getExpr());
+		System.out.println("returnType: " + returnType);
+
 		check(returnType == expressionType, returnStatement, "return statement with invalid type");
 		//////////////////////////
 

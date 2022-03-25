@@ -15,11 +15,11 @@ public class SymbolTable {
     }
 
 //TODO:  Implement a symbol table class that is appropriate for this language. 
-public static HashMap<String, Declaration> map = new HashMap <String, Declaration>();
+    HashMap<String, Declaration> map = new HashMap <String, Declaration>();
     HashMap<TypeCheckVisitor.Pair<Types.Type, Types.Type>, Types.Type> BinaryExprs = new HashMap<TypeCheckVisitor.Pair<Types.Type, Types.Type>, Types.Type>();
 
 
-    public static Declaration Search(String key)
+    public Declaration Search(String key)
 {
     return map.get(key);
 }
