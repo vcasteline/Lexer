@@ -153,6 +153,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
 		
 		Kind op = binaryExpr.getOp().getKind();
+		System.out.println(binaryExpr.getLeft());
 		Type leftType = (Type) binaryExpr.getLeft().visit(this, arg);
 		Type rightType = (Type) binaryExpr.getRight().visit(this, arg);
 
@@ -163,6 +164,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 		}
 		else {
 			Type returnType = symbolTable.checkMap(leftType, rightType);
+			System.out.println("Left: " + leftType);
+			System.out.println("Right: " + rightType);
 			check(returnType != null, binaryExpr, "incompatible types for BinaryExpr");
 			binaryExpr.setType(returnType);
 			return returnType;
@@ -279,8 +282,25 @@ public class TypeCheckVisitor implements ASTVisitor {
 			Expr x = assignmentStatement.getSelector().getX();
 			Expr y = assignmentStatement.getSelector().getY();
 
-			check(xType == INT && yType == INT, assignmentStatement, "x and y values must be type INT");
+			check(symbolTable.map.get(assignmentStatement.getName()).getDim() != null, assignmentStatement, "No dimension provided for image");
+
+			//Sets width and height to the value of assignmentStatement Dim in the table
+			String widthName = symbolTable.map.get(assignmentStatement.getName()).getDim().getHeight().getText();
+			String heightName = symbolTable.map.get(assignmentStatement.getName()).getDim().getWidth().getText();
+
+			//BREAKS TEST 19
+			//symbolTable.map.put(x.getText(), symbolTable.map.get(widthName));
+			//symbolTable.map.put(y.getText(), symbolTable.map.get(heightName));
+
+			Type xTypefromTable = symbolTable.map.get(widthName).getType();
+			Type yTypefromTable = symbolTable.map.get(heightName).getType();
+
+
+			check(xTypefromTable == INT && yTypefromTable == INT || xType == INT && yType == INT, assignmentStatement, "x and y values must be type INT");
 			check(x instanceof IdentExpr && y instanceof IdentExpr, assignmentStatement,"x and y expressions must be IdentExpressions");
+			//BREAKS TEST 19
+			//symbolTable.map.remove(x.getText());
+			//symbolTable.map.remove(y.getText());
 			check(symbolTable.Search(x.getText()) == null, assignmentStatement,"Name already declared for x, use another name");
 			check(symbolTable.Search(y.getText()) == null, assignmentStatement,"Name already declared for y, use another name");
 			if(assignmentStatement.getExpr().getType() == COLORFLOAT || assignmentStatement.getExpr().getType() == FLOAT || assignmentStatement.getExpr().getType() == INT){
@@ -288,6 +308,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 			}
 			check(assignmentStatement.getExpr().getType() == COLOR || assignmentStatement.getExpr().getCoerceTo() == COLOR, assignmentStatement, "Right hand side must be of type color, colorfloat, int, or float");
+
+
 		}
 
 		return null;
@@ -308,11 +330,17 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
 		//TODO:  implement this method
 		Type targetType = symbolTable.Search(readStatement.getName()).getType();
+		check(readStatement.getSelector() == null, readStatement, "Read statement cannot have pixel selector");
 		Type rightHand = (Type) readStatement.getSource().visit(this, arg);
 		check(rightHand == CONSOLE || rightHand == STRING, readStatement, "Right hand side must be Type CONSOLE or STRING" );
 		if(targetType!=null){
 			readStatement.setTargetDec(symbolTable.Search(readStatement.getName()));
+			System.out.println(readStatement.getTargetDec().getType());
 			readStatement.getTargetDec().setInitialized(true);
+
+			if(rightHand == CONSOLE) {
+				readStatement.getSource().setCoerceTo(targetType);
+			}
 		}
 		return null;
 	}
@@ -323,13 +351,16 @@ public class TypeCheckVisitor implements ASTVisitor {
 		boolean coerced = false;
 		String name = declaration.getName();
 
-//		System.out.println("vardeclaration: " + name);
+		System.out.println("vardeclaration: " + name);
+		System.out.println(declaration.getType());
+
 
 		//Check if Var is in the Map
 		if(symbolTable.map.containsKey(name) == true)
 		{
 			throw new TypeCheckException("Cannot have two vars of the same name");
 		}
+
 
 		//Add Var to the map
 		symbolTable.map.put(name, declaration);
@@ -340,7 +371,25 @@ public class TypeCheckVisitor implements ASTVisitor {
 			declaration.setInitialized(true);
 		}
 
+		if(declaration.getType() == IMAGE)
+		{
+			if(declaration.getDim() != null) {
+				declaration.getDim().getHeight().setType((Type) declaration.getDim().getHeight().visit(this, arg));
+				System.out.println("TYPE: " + declaration.getDim().getHeight().getText());
+				System.out.println("TYPE: " + declaration.getDim().getHeight().getType());
 
+
+				declaration.getDim().getWidth().setType((Type) declaration.getDim().getWidth().visit(this, arg));
+				System.out.println("TYPE: " + declaration.getDim().getWidth().getText());
+
+				Type widthType = declaration.getDim().getWidth().getType();
+				Type heightType = declaration.getDim().getHeight().getType();
+				check(widthType == INT && heightType == INT, declaration, "Image dimensions must be of type INT");
+			}
+
+
+
+		}
 
 		//System.out.println("got it here");
 
