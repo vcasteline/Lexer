@@ -278,6 +278,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 			Type yType = assignmentStatement.getSelector().getY().getType();
 			Expr x = assignmentStatement.getSelector().getX();
 			Expr y = assignmentStatement.getSelector().getY();
+//			Declaration tempdec = new Declaration(
+//			symbolTable.map.put(new Pair<String, Declaration>(x.getText(), Declaration));
 
 			check(xType == INT && yType == INT, assignmentStatement, "x and y values must be type INT");
 			check(x instanceof IdentExpr && y instanceof IdentExpr, assignmentStatement,"x and y expressions must be IdentExpressions");
