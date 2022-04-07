@@ -118,7 +118,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
@@ -150,7 +150,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitColorExpr(ColorExpr colorExpr, Object arg) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
     }
 
     @Override
@@ -202,12 +202,14 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
+
     }
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
+
     }
 
     @Override
@@ -282,7 +284,8 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDefWithDim(NameDefWithDim nameDefWithDim, Object arg) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
+
     }
 
     @Override
@@ -321,6 +324,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitUnaryExprPostfix(UnaryExprPostfix unaryExprPostfix, Object arg) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("Not yet implemented");
+
     }
 }
