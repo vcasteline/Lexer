@@ -380,7 +380,6 @@ class Assignment5TestStarter {
          else
             6.5
          fi;
-        
         ^c;
       """;
 		checkResult(input,  2.5f);
@@ -394,7 +393,6 @@ class Assignment5TestStarter {
          float b = 4.2;
          int d = 2;
         float c =  (a + b) + d;
-       
       ^c;
       """;
 		checkResult(input,  9.2f);
@@ -450,7 +448,6 @@ class Assignment5TestStarter {
 		String input = """
 	  		int a()
 	  		int c = (if (5<6) 5 else 4 fi)*6;
-
 	  		^ c;
 	  		""";
 		checkResult(input,  null, 30);

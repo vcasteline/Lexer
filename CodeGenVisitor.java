@@ -41,11 +41,13 @@ public class CodeGenVisitor implements ASTVisitor {
     }
 
     String handleDecsAndStatements(List<ASTNode> decState, Object arg) throws Exception {
+
         String returnString = "";
         StringBuilder str = new StringBuilder();
 
         for(int i = 0; i < decState.size(); ++i)
         {
+            System.out.println("decState: " + decState.get(i).getText());
             str.append(decState.get(i).visit(this, arg));
         }
 
@@ -107,7 +109,11 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder str = new StringBuilder();
         str.append(floatLitExpr.getValue()).append("f");
 
+        if(floatLitExpr.getCoerceTo() != null && floatLitExpr.getCoerceTo() != Types.Type.FLOAT) {
+            str.append("(").append(floatLitExpr.getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")").append(floatLitExpr.getText());
+        }
         return str.toString();
+
     }
 
     @Override
@@ -159,7 +165,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
         StringBuilder str = new StringBuilder();
 
-        str.append("(").append(binaryExpr.getLeft().visit(this, arg)).append(" ").append(binaryExpr.getOp().getText()).append(" ").append(binaryExpr.getRight().visit(this, arg)).append(")");
+        if(binaryExpr.getOp().getKind() == IToken.Kind.EQUALS && binaryExpr.getLeft().getType() == Types.Type.STRING && binaryExpr.getRight().getType() == Types.Type.STRING){
+           str.append("(").append(binaryExpr.getLeft().visit(this, arg)).append(".equals(").append(binaryExpr.getRight().visit(this, arg)).append(")").append(")");
+        }
+        else {
+            str.append("(").append(binaryExpr.getLeft().visit(this, arg)).append(" ").append(binaryExpr.getOp().getText()).append(" ").append(binaryExpr.getRight().visit(this, arg)).append(")");
+        }
+
         return str.toString();
     }
 
@@ -184,7 +196,7 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws Exception {
         StringBuilder str = new StringBuilder();
         str.append("(").append(conditionalExpr.getCondition().visit(this, arg)).append(" ? ");
-        str.append(conditionalExpr.getTrueCase().visit(this, arg)).append(" : ").append(conditionalExpr.getFalseCase().visit(this, arg));
+        str.append(conditionalExpr.getTrueCase().visit(this, arg)).append(" : ").append(conditionalExpr.getFalseCase().visit(this, arg)).append(")");
         return str.toString();
     }
 
@@ -202,7 +214,16 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws Exception {
         StringBuilder str = new StringBuilder();
 
-        str.append(assignmentStatement.getName()).append(" = ").append(assignmentStatement.getExpr().visit(this, arg)).append(";\n");
+
+
+        str.append(assignmentStatement.getName()).append(" = ");
+        System.out.println("getcoerceto: "+(assignmentStatement.getExpr().getCoerceTo()));
+        System.out.println("targetdectype: "+ assignmentStatement.getTargetDec().getType());
+
+        if(assignmentStatement.getExpr().getCoerceTo() != null) {
+            str.append("(").append(assignmentStatement.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
+        }
+        str.append(assignmentStatement.getExpr().visit(this, arg)).append(";\n");
 
 
         return str.toString();
@@ -285,7 +306,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
         if(declaration.getExpr() != null)
         {
-            str.append(" = ").append(declaration.getExpr().visit(this, arg));
+            str.append(" = ");
+            if(declaration.getExpr().getCoerceTo() != null){
+                str.append("(").append(declaration.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
+            }
+            str.append(declaration.getExpr().visit(this, arg));
+
         }
             str.append(";\n");
 

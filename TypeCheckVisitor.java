@@ -399,16 +399,27 @@ public class TypeCheckVisitor implements ASTVisitor {
 		if(declaration.isInitialized() &&  symbolTable.Search(name).getType() != declaration.getExpr().visit(this, arg))
 		{
 			//If a float and an int, coerce
-			if(declaration.getExpr().visit(this, arg) == INT && symbolTable.Search(name).getType() == FLOAT)
-			{
-				declaration.getExpr().setCoerceTo(FLOAT);
-//				System.out.println("coreced");
-				coerced = true;
+//			if(declaration.getExpr().visit(this, arg) == INT && symbolTable.Search(name).getType() == FLOAT)
+//			{
+//				declaration.getExpr().setCoerceTo(FLOAT);
+////				System.out.println("coreced");
+//				coerced = true;
+//			}
+			Type targetType = symbolTable.Search(name).getType();
+			Type decType = declaration.getExpr().getType();
+			if(targetType!=IMAGE){
+				if(targetType==INT && (decType == FLOAT || decType == COLOR)  ||
+						targetType==FLOAT && decType == INT||
+						targetType==COLOR && decType == INT){
+
+					declaration.getExpr().setCoerceTo(targetType);
+				}
+				check(targetType == decType || targetType == declaration.getExpr().getCoerceTo(), declaration, "Expression must be assignment compatible with target");
 			}
 
-			if(coerced == false) {
-				throw new TypeCheckException("mismatched types");
-			}
+//			if(coerced == false) {
+//				throw new TypeCheckException("mismatched types");
+//			}
 		}
 
 
