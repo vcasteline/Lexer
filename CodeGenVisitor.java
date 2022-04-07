@@ -47,7 +47,6 @@ public class CodeGenVisitor implements ASTVisitor {
 
         for(int i = 0; i < decState.size(); ++i)
         {
-            System.out.println("decState: " + decState.get(i).getText());
             str.append(decState.get(i).visit(this, arg));
         }
 
@@ -129,7 +128,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
 
         String type = consoleExpr.getCoerceTo().toString().toLowerCase(Locale.ROOT);
-        System.out.println("Type: " + type);
+
 
         if(type.equals("int"))
         {
@@ -219,8 +218,7 @@ public class CodeGenVisitor implements ASTVisitor {
 
 
         str.append(assignmentStatement.getName()).append(" = ");
-        System.out.println("getcoerceto: "+(assignmentStatement.getExpr().getCoerceTo()));
-        System.out.println("targetdectype: "+ assignmentStatement.getTargetDec().getType());
+
 
         if(assignmentStatement.getExpr().getCoerceTo() != null) {
             str.append("(").append(assignmentStatement.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");

@@ -153,7 +153,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 	public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws Exception {
 		
 		Kind op = binaryExpr.getOp().getKind();
-		System.out.println(binaryExpr.getLeft());
+
 		Type leftType = (Type) binaryExpr.getLeft().visit(this, arg);
 		Type rightType = (Type) binaryExpr.getRight().visit(this, arg);
 
@@ -164,8 +164,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		}
 		else {
 			Type returnType = symbolTable.checkMap(leftType, rightType);
-			System.out.println("Left: " + leftType);
-			System.out.println("Right: " + rightType);
+
 			check(returnType != null, binaryExpr, "incompatible types for BinaryExpr");
 			binaryExpr.setType(returnType);
 			return returnType;
@@ -335,7 +334,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		check(rightHand == CONSOLE || rightHand == STRING, readStatement, "Right hand side must be Type CONSOLE or STRING" );
 		if(targetType!=null){
 			readStatement.setTargetDec(symbolTable.Search(readStatement.getName()));
-			System.out.println(readStatement.getTargetDec().getType());
+
 			readStatement.getTargetDec().setInitialized(true);
 
 			if(rightHand == CONSOLE) {
@@ -351,8 +350,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 		boolean coerced = false;
 		String name = declaration.getName();
 
-		System.out.println("vardeclaration: " + name);
-		System.out.println(declaration.getType());
+
 
 
 		//Check if Var is in the Map
@@ -375,12 +373,10 @@ public class TypeCheckVisitor implements ASTVisitor {
 		{
 			if(declaration.getDim() != null) {
 				declaration.getDim().getHeight().setType((Type) declaration.getDim().getHeight().visit(this, arg));
-				System.out.println("TYPE: " + declaration.getDim().getHeight().getText());
-				System.out.println("TYPE: " + declaration.getDim().getHeight().getType());
 
 
 				declaration.getDim().getWidth().setType((Type) declaration.getDim().getWidth().visit(this, arg));
-				System.out.println("TYPE: " + declaration.getDim().getWidth().getText());
+
 
 				Type widthType = declaration.getDim().getWidth().getType();
 				Type heightType = declaration.getDim().getHeight().getType();
