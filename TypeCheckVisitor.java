@@ -346,7 +346,8 @@ public class TypeCheckVisitor implements ASTVisitor {
 			//BREAKS TEST 19
 
 
-			if(assignmentStatement.getExpr().getType() == COLORFLOAT || assignmentStatement.getExpr().getType() == FLOAT || assignmentStatement.getExpr().getType() == INT){
+			if(assignmentStatement.getExpr().getType() == COLOR || assignmentStatement.getExpr().getType() == COLORFLOAT || assignmentStatement.getExpr().getType() == FLOAT
+					|| assignmentStatement.getExpr().getType() == INT){
 				assignmentStatement.getExpr().setCoerceTo(COLOR);
 
 			}
@@ -418,7 +419,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 		if(declaration.getType() == IMAGE)
 		{
-			check(declaration.getDim() !=null || exprType == IMAGE, declaration, "Must have a Dimension or initializer expression of type IMAGE");
+			check(declaration.getDim() !=null || exprType == IMAGE || exprType == STRING || exprType == CONSOLE, declaration, "Must have a Dimension or initializer expression of type IMAGE");
 			if(declaration.getDim() != null) {
 				declaration.getDim().getHeight().setType((Type) declaration.getDim().getHeight().visit(this, arg));
 

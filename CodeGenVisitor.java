@@ -2,6 +2,7 @@ package edu.ufl.cise.plc;
 
 import edu.ufl.cise.plc.ast.*;
 import edu.ufl.cise.plc.ast.Dimension;
+import edu.ufl.cise.plc.runtime.ColorTuple;
 import edu.ufl.cise.plc.runtime.ConsoleIO;
 
 import java.util.*;
@@ -117,7 +118,9 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitColorConstExpr(ColorConstExpr colorConstExpr, Object arg) throws Exception {
-        throw new UnsupportedOperationException("Not yet implemented");
+        StringBuilder str = new StringBuilder();
+        str.append("(ColorTuple.unpack(Color.").append(colorConstExpr.getText()).append(".getRGB()))");
+        return str.toString();
     }
 
     @Override
@@ -149,7 +152,10 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitColorExpr(ColorExpr colorExpr, Object arg) throws Exception {
-        throw new UnsupportedOperationException("Not yet implemented");
+        StringBuilder str = new StringBuilder();
+        str.append("new ColorTuple(").append(colorExpr.getRed().visit(this, arg)).append(", ").append(colorExpr.getGreen().visit(this, arg)).append(", ").append(colorExpr.getBlue().visit(this, arg));
+        str.append(")");
+        return str.toString();
     }
 
     @Override
@@ -217,14 +223,35 @@ public class CodeGenVisitor implements ASTVisitor {
 
 
 
-        str.append(assignmentStatement.getName()).append(" = ");
 
+        if(assignmentStatement.getTargetDec().getType() == Types.Type.IMAGE ){
+            if(assignmentStatement.getTargetDec().getDim() != null && assignmentStatement.getExpr().getType() == Types.Type.IMAGE){
 
-        if(assignmentStatement.getExpr().getCoerceTo() != null) {
-            str.append("(").append(assignmentStatement.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
+            }
+            else{
+
+            }
+            if(assignmentStatement.getExpr().getCoerceTo() == Types.Type.COLOR){
+                str.append("for(int x=0; x<").append(assignmentStatement.getName()).append(".getWidth(); x++)\n");
+                str.append("for(int y=0; y<").append(assignmentStatement.getName()).append(".getHeight(); y++)\n");
+                str.append("ImageOps.setColor(").append(assignmentStatement.getName()).append(", x, y, ");
+                str.append(assignmentStatement.getExpr().visit(this, arg)).append(");\n");
+
+            }
+            else if(assignmentStatement.getExpr().getCoerceTo() == Types.Type.INT){
+                str.append("for(int x=0; x<").append(assignmentStatement.getName()).append(".getWidth(); x++)\n");
+                str.append("for(int y=0; y<").append(assignmentStatement.getName()).append(".getHeight(); y++)\n");
+                str.append("ImageOps.setColor(").append(assignmentStatement.getName()).append(", x, y, ");
+                str.append(assignmentStatement.getExpr().visit(this, arg)).append(");\n");
+            }
         }
-        str.append(assignmentStatement.getExpr().visit(this, arg)).append(";\n");
-
+        else {
+            str.append(assignmentStatement.getName()).append(" = ");
+            if (assignmentStatement.getExpr().getCoerceTo() != null) {
+                str.append("(").append(assignmentStatement.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
+            }
+            str.append(assignmentStatement.getExpr().visit(this, arg)).append(";\n");
+        }
 
         return str.toString();
     }
@@ -232,13 +259,14 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws Exception {
         StringBuilder str = new StringBuilder();
-
-
+        if(writeStatement.getSource().getType() == Types.Type.IMAGE && writeStatement.getDest().getType() == Types.Type.CONSOLE){
+            str.append("ConsoleIO.displayImageOnScreen(").append(writeStatement.getDest().visit(this, arg)).append(");\n");
+        }
        ConsoleIO.console.println(writeStatement.getSource().visit(this, arg));
 
         //str.append(writeStatement.getSource().visit(this, arg)).append(";");
 
-        return "";
+        return str.toString();
     }
 
     @Override
@@ -254,12 +282,27 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder code = new StringBuilder();
 
         code.append("package ").append(Package).append(";\n");
+        //if(program.getReturnType() == Types.Type.IMAGE){
+            code.append("import ").append("java.awt.image.BufferedImage").append(";\n");
+            code.append("import ").append("edu.ufl.cise.plc.runtime.FileURLIO").append(";\n");
+            code.append("import ").append("edu.ufl.cise.plc.runtime.ImageOps;\n");
+            code.append("import ").append("edu.ufl.cise.plc.runtime.ColorTuple;\n");
+            code.append("import ").append("java.awt.Color").append(";\n");
+            code.append("import ").append("static edu.ufl.cise.plc.runtime.ImageOps.BoolOP.*;\n");
+            code.append("import ").append("edu.ufl.cise.plc.runtime.ConsoleIO;\n");
+
+        //}
         code.append("public class ").append(program.getName()).append(" {");
         code.append("public static ");
 
+        if(program.getReturnType() == Types.Type.IMAGE){
+            code.append("BufferedImage").append(" apply (");
 
-        code.append(formatType(program.getReturnType().toString())).append(" apply (");
+        }
+        else{
+            code.append(formatType(program.getReturnType().toString())).append(" apply (");
 
+        }
 
         code.append(formatParams(program.getParams(), arg)).append("){\n");
         code.append(handleDecsAndStatements(program.getDecsAndStatements(), arg)).append("\n}\n}");
@@ -303,19 +346,37 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 
         StringBuilder str = new StringBuilder();
-        str.append(declaration.getNameDef().visit(this, arg));
-
-        if(declaration.getExpr() != null)
-        {
-            str.append(" = ");
-            if(declaration.getExpr().getCoerceTo() != null){
-                str.append("(").append(declaration.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
-            }
-            str.append(declaration.getExpr().visit(this, arg));
-
+        if(declaration.getNameDef().getType() == Types.Type.IMAGE){
+            str.append("BufferedImage ").append(declaration.getName());
+        }else{
+            str.append(declaration.getNameDef().visit(this, arg));
         }
-            str.append(";\n");
 
+        if(declaration.getExpr() != null) {
+            str.append(" = ");
+            if (declaration.getNameDef().getType() == Types.Type.IMAGE) { //if is an image with an expression
+                if (declaration.getNameDef().getDim() != null) { //if image has an expression and has a dim
+                    str.append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getWidth().getText()).append(", ").append(declaration.getNameDef().getDim().getHeight().getText()).append(");\n");
+                    str.append("FileURLIO.closeFiles()");
+                } else if (declaration.getNameDef().getDim() == null) { //if image has an expression and does not have a dim
+                    str.append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(");\n");
+                }
+            } else {
+                if (declaration.getExpr().getCoerceTo() != null) {
+                    str.append("(").append(declaration.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
+                }
+                str.append(declaration.getExpr().visit(this, arg));
+            }
+            str.append(";\n");
+        }else{
+            if (declaration.getNameDef().getType() == Types.Type.IMAGE) { //if is an image without an expression
+                if (declaration.getNameDef().getDim() != null) { // if is an image without an expression and with dim
+                    str.append(" = new BufferedImage(").append(declaration.getNameDef().getDim().getWidth().getText()).append(", ").append(declaration.getNameDef().getDim().getHeight().getText()).append(", ").append("BufferedImage.TYPE_INT_RGB);\n");
+                }else{
+                    //error
+                }
+            }
+        }
 
         return str.toString();
     }
