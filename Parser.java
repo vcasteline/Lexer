@@ -48,7 +48,7 @@ public class Parser implements IParser{
         return returnProgram;
 
     }
-    public Program program() throws LexicalException {
+    public Program program() throws PLCException{
 
         IToken firstToken = currToken;
         Types.Type returnType = null;
@@ -119,7 +119,7 @@ public class Parser implements IParser{
         else{errorSyn = true;}
         return new Program(firstToken, returnType, name, params, decsAndStatements);
     }
-    public NameDef nameDef(){
+    public NameDef nameDef() throws SyntaxException{
         IToken firstToken = currToken;
         IToken type = currToken;
 
@@ -144,7 +144,7 @@ public class Parser implements IParser{
         return nameDefinition;
     }
 
-    public Declaration declaration(){
+    public Declaration declaration() throws SyntaxException{
         NameDef namedefinition = nameDef();
         IToken firstToken = currToken;
         consume();
@@ -158,7 +158,7 @@ public class Parser implements IParser{
         }
         return new VarDeclaration(firstToken,namedefinition,op,expr);
     }
-    public Expr expr()//::=ConditionalExpr | LogicalOrExpr
+    public Expr expr() throws SyntaxException//::=ConditionalExpr | LogicalOrExpr
     {
         Expr currExpr = null;
         if(isKind(Kind.KW_IF)){
@@ -170,7 +170,7 @@ public class Parser implements IParser{
 
         return currExpr;
     }
-    public Expr conditionalExpr(){
+    public Expr conditionalExpr() throws SyntaxException{
         IToken firstToken = currToken;
         Expr currExpr = null;
         Expr condition = null;
@@ -195,7 +195,7 @@ public class Parser implements IParser{
         return currExpr;
 
     }
-    public Expr LogicalOrExpr()//LogicalAndExpr ( '|' LogicalAndExpr)*
+    public Expr LogicalOrExpr() throws SyntaxException//LogicalAndExpr ( '|' LogicalAndExpr)*
     {
         IToken firstToken = currToken;
 
@@ -213,7 +213,7 @@ public class Parser implements IParser{
         return left;
 
     }
-    public Expr logicalAndExpr()
+    public Expr logicalAndExpr() throws SyntaxException
     {
         IToken firstToken = currToken;
 
@@ -233,7 +233,7 @@ public class Parser implements IParser{
 
     }
 
-    public Expr comparisonExpr()
+    public Expr comparisonExpr() throws SyntaxException
     {
         IToken firstToken = currToken;
 
@@ -252,7 +252,7 @@ public class Parser implements IParser{
 
     }
 
-    public Expr additiveExpr()
+    public Expr additiveExpr() throws SyntaxException
     {
         //Expr currExpr = multiplicativeExpr();
         IToken firstToken = currToken;
@@ -278,7 +278,7 @@ public class Parser implements IParser{
         return left;
     }
 
-    public Expr multiplicativeExpr()
+    public Expr multiplicativeExpr() throws SyntaxException
     {   IToken firstToken = currToken;
 
         Expr left = null;
@@ -294,7 +294,7 @@ public class Parser implements IParser{
         return left;
     }
 
-    public Expr unaryExpr()
+    public Expr unaryExpr() throws SyntaxException
     {
         Expr currExpr = null;
         IToken firstToken = currToken;
@@ -313,7 +313,7 @@ public class Parser implements IParser{
         return currExpr;
     }
 
-    public Expr unaryExprPostfix()
+    public Expr unaryExprPostfix() throws SyntaxException
     {   IToken firstToken = currToken;
         //Expr currExpr = primaryExpr();
         PixelSelector pixel = null;
@@ -327,7 +327,7 @@ public class Parser implements IParser{
 
         return unaryPost;
     }
-    public Expr primaryExpr() //PrimaryExpr ::=// BOOLEAN_LIT |STRING_LIT |INT_LIT |FLOAT_LIT |IDENT |'(' Expr ')'
+    public Expr primaryExpr() throws SyntaxException//PrimaryExpr ::=// BOOLEAN_LIT |STRING_LIT |INT_LIT |FLOAT_LIT |IDENT |'(' Expr ')'
 
     {
         Expr currentExpr = null;
@@ -372,7 +372,7 @@ public class Parser implements IParser{
 
         return currentExpr;
     }
-    public PixelSelector pixelSelector(){
+    public PixelSelector pixelSelector() throws SyntaxException{
 
         IToken firstToken = currToken;
         Expr x = expr();
@@ -382,7 +382,7 @@ public class Parser implements IParser{
         match(Kind.RSQUARE);
         return pixel;
     }
-    public Dimension dimension(){
+    public Dimension dimension() throws SyntaxException{
        // same as pixelselector
         IToken firstToken = currToken;
         Expr x = expr();
@@ -392,7 +392,7 @@ public class Parser implements IParser{
         match(Kind.RSQUARE);
         return dimen;
     }
-    public Statement statement() {
+    public Statement statement() throws SyntaxException {
         IToken firstToken = currToken;
         PixelSelector pixel = null;
         Statement statement = null;
@@ -441,40 +441,6 @@ public class Parser implements IParser{
     }
 
 
-    void term()  // term ::= factor ( ( * | / )  factor )*
-     {
-         factor();
-         while (isKind(Kind.TIMES) || isKind(Kind.DIV))
-         {
-             consume();
-             factor();
-         }
-         return;
-     }
-
-   public void factor()  //factor ::= int_lit | ( expr )
-     {
-         if (isKind(Kind.INT_LIT))
-         {
-             consume();
-         }
-         else if (isKind(Kind.LPAREN))
-         {
-             consume();
-             expr();
-             match(Kind.RPAREN);
-         }
-         else {
-            System.out.println("Illegal structure");
-         }
-         return;
-     }
-
-     public void readInput()
-     {
-
-     }
-
 
 
     ILexer getLexer(String input){
@@ -518,7 +484,7 @@ public class Parser implements IParser{
             e.printStackTrace();
         }
     }
-    boolean match(Kind kind)  {
+    boolean match(Kind kind) throws SyntaxException {
         if(currToken.getKind() == kind)
         {
             consume();
@@ -526,8 +492,9 @@ public class Parser implements IParser{
         }
         else{
             print("Match error: Should be: " + kind + ", but is " + currToken.getKind());
-            errorSyn=true;
-            return false;
+            throw new SyntaxException("match error!");
+//            errorSyn=true;
+//            return false;
         }
 
     }
