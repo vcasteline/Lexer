@@ -143,15 +143,22 @@ public class CodeGenVisitor implements ASTVisitor {
         {
             type = "Integer";
         }
-
+        if(type.equals("string"))
+        {
+            type = "String";
+        }
         String boxType = type.substring(0,1).toUpperCase(Locale.ROOT) + type.substring(1);
         prompt.append("Enter ").append(boxType).append(": ");
 
 
 
         str.append("(").append(type).append(") ");
-        str.append(ConsoleIO.readValueFromConsole(consoleExpr.getCoerceTo().toString(), prompt.toString()));
+        if(type.equals("String")){
+            str.append("\"").append(ConsoleIO.readValueFromConsole(consoleExpr.getCoerceTo().toString(), prompt.toString())).append("\"");
 
+        }else {
+            str.append(ConsoleIO.readValueFromConsole(consoleExpr.getCoerceTo().toString(), prompt.toString()));
+        }
 
         return str.toString();
     }
@@ -324,20 +331,20 @@ public class CodeGenVisitor implements ASTVisitor {
         StringBuilder str = new StringBuilder();
 
         if(writeStatement.getSource().getType() == Types.Type.IMAGE && writeStatement.getDest().getType() == Types.Type.CONSOLE){
-            System.out.println("before line");
-
             str.append("ConsoleIO.displayImageOnScreen(").append(writeStatement.getSource().visit(this, arg)).append(");\n");
-            System.out.println("here  now");
         }
-        else if(writeStatement.getDest().getType() == Types.Type.STRING){
+        else if(writeStatement.getSource().getType() == Types.Type.IMAGE && writeStatement.getDest().getType() == Types.Type.STRING){
             str.append("FileURLIO.writeImage(").append(writeStatement.getSource().visit(this, arg)).append(", ").append(writeStatement.getDest().getText()).append(");\n");
         }
-        if(writeStatement.getSource().getType() == Types.Type.STRING){
+        else if(writeStatement.getSource().getType() == Types.Type.INT){
+            str.append("FileURLIO.writeValue(").append(writeStatement.getSource().visit(this, arg)).append(", ").append(writeStatement.getDest().visit(this, arg)).append(");\n");
+        }
+        if(writeStatement.getSource().getType() == Types.Type.STRING && writeStatement.getDest().getType() == Types.Type.CONSOLE){
             ConsoleIO.console.println(((String)(writeStatement.getSource().visit(this, arg))).substring(1, ((String)(writeStatement.getSource().visit(this, arg))).length()-1));
-        }else if(writeStatement.getSource().getType() == Types.Type.FLOAT){
+        }else if(writeStatement.getSource().getType() == Types.Type.FLOAT && writeStatement.getDest().getType() == Types.Type.CONSOLE){
             ConsoleIO.console.println(((String)(writeStatement.getSource().visit(this, arg))).substring(0, ((String)(writeStatement.getSource().visit(this, arg))).length()-1));
         }
-        else if(writeStatement.getSource().getType() == Types.Type.COLOR){
+        else if(writeStatement.getSource().getType() == Types.Type.COLOR && writeStatement.getDest().getType() == Types.Type.CONSOLE){
             if(writeStatement.getSource() instanceof ColorExpr) {
                 System.out.println(((ColorExpr)writeStatement.getSource()).getRed().visit(this, arg));
 
@@ -354,15 +361,29 @@ public class CodeGenVisitor implements ASTVisitor {
             }
             else{
                 String c = writeStatement.getSource().getText();
-                int color;
+                int color = Color.RED.getRGB();
                 switch (c){
                     case "RED"-> color = Color.RED.getRGB();
                     case "GREEN" -> color = Color.GREEN.getRGB();
+                    case "BLUE" -> color = Color.BLUE.getRGB();
+                    case "CYAN" -> color = Color.CYAN.getRGB();
+                    case "GRAY" -> color = Color.GRAY.getRGB();
+                    case "DARK_GRAY" -> color = Color.DARK_GRAY.getRGB();
+                    case "LIGHT_GRAY" -> color = Color.LIGHT_GRAY.getRGB();
+                    case "MAGENTA" -> color = Color.MAGENTA.getRGB();
+                    case "ORANGE" -> color = Color.ORANGE.getRGB();
+                    case "PINK" -> color = Color.PINK.getRGB();
+                    case "WHITE" -> color = Color.WHITE.getRGB();
+                    case "YELLOW" -> color = Color.YELLOW.getRGB();
+                    case "BLACK" -> color = Color.BLACK.getRGB();
+
                 }
-                int color = Color.RED.getRGB();
-                ColorTuple redTuple= ColorTuple.unpack(color);
-                int r = ColorTuple.getRed(redTuple);
-                ConsoleIO.console.println("ColorTuple [red=" + r + "]");
+
+                ColorTuple colorTuple= ColorTuple.unpack(color);
+                int r = ColorTuple.getRed(colorTuple);
+                int g = ColorTuple.getGreen(colorTuple);
+                int b = ColorTuple.getBlue(colorTuple);
+                ConsoleIO.console.println("ColorTuple [red=" + r + ", green=" + g + ", blue=" + b + "]");
 
             }
 
@@ -378,16 +399,28 @@ public class CodeGenVisitor implements ASTVisitor {
     @Override
     public Object visitReadStatement(ReadStatement readStatement, Object arg) throws Exception {
         StringBuilder str = new StringBuilder();
-        String w = readStatement.getTargetDec().getDim().getWidth().getText();
-        String h = readStatement.getTargetDec().getDim().getHeight().getText();
+        if(readStatement.getTargetDec().getDim() != null) {
+            String w = readStatement.getTargetDec().getDim().getWidth().getText();
+            String h = readStatement.getTargetDec().getDim().getHeight().getText();
 
-        if(readStatement.getTargetDec().getType() == Types.Type.IMAGE){
-            str.append(readStatement.getName()).append(" = ").append("FileURLIO.readImage(").append(readStatement.getSource().visit(this, arg)).append(", ");
-            str.append(w).append(", ").append(h).append(");\n");
+            if (readStatement.getTargetDec().getType() == Types.Type.IMAGE) {
+                str.append(readStatement.getName()).append(" = ").append("FileURLIO.readImage(").append(readStatement.getSource().visit(this, arg)).append(", ");
+                str.append(w).append(", ").append(h).append(");\n");
+            }
         }
         else{
-            str.append(readStatement.getName()).append(" = ").append(readStatement.getSource().visit(this, arg)).append(";\n");
-
+            if (readStatement.getTargetDec().getType() == Types.Type.IMAGE) {
+                str.append(readStatement.getName()).append(" = ").append("FileURLIO.readImage(").append(readStatement.getSource().visit(this, arg));
+                str.append(");\n");
+            }
+//            else if(readStatement.getSource().getType() == Types.Type.STRING){
+//                str.append(" = ").append("(").append(readStatement.getTargetDec().getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(readStatement.getSource().visit(this, arg)).append(");\n");
+//
+//            }
+            else {
+                //str.append(readStatement.getName()).append(" = ").append("(").append(readStatement.getTargetDec().getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(readStatement.getSource().visit(this, arg)).append(");\n");
+                str.append(readStatement.getName()).append(" = ").append(readStatement.getSource().visit(this, arg)).append(";\n");
+            }
         }
         return str.toString();
     }
@@ -466,87 +499,99 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitVarDeclaration(VarDeclaration declaration, Object arg) throws Exception {
 
         StringBuilder str = new StringBuilder();
-        if(declaration.getNameDef().getType() == Types.Type.IMAGE){
-            str.append("BufferedImage ").append(declaration.getName());
-        }else if(declaration.getNameDef().getType() == Types.Type.COLOR){
-            str.append("ColorTuple ").append(declaration.getName());
 
-        }
-        else{
-            str.append(declaration.getNameDef().visit(this, arg));
-        }
+            if (declaration.getNameDef().getType() == Types.Type.IMAGE) {
+                str.append("BufferedImage ").append(declaration.getName());
+            } else if (declaration.getNameDef().getType() == Types.Type.COLOR) {
+                str.append("ColorTuple ").append(declaration.getName());
 
-        if(declaration.getExpr() != null) {
-            str.append(" = ");
-            if (declaration.getNameDef().getType() == Types.Type.IMAGE) { //if is an image with an expression
-//                if(declaration.getExpr().getType() == Types.Type.IMAGE){
-//                    if(declaration.getNameDef().getDim() != null){
+            } else {
+                str.append(declaration.getNameDef().visit(this, arg));
+            }
+
+            if (declaration.getExpr() != null) {
+                if (declaration.getOp() != null && declaration.getOp().getKind() == IToken.Kind.ASSIGN) {
+                    str.append(" = ");
+                    if (declaration.getNameDef().getType() == Types.Type.IMAGE) { //if is an image with an expression
+
+                        if (declaration.getNameDef().getDim() == null && declaration.getExpr() instanceof BinaryExpr) {
+                            if (declaration.getExpr().getType() == Types.Type.IMAGE) {
+                                str.append("ImageOps.clone(").append("ImageOps.binaryImageScalarOp(").append(((BinaryExpr) declaration.getExpr()).getOp().getKind().toString()).append(", ").append(((BinaryExpr) declaration.getExpr()).getLeft().getText()).append(", ").append(((BinaryExpr) declaration.getExpr()).getRight().getText());
+                                str.append(")").append(");\n");
+
+                            } else {
+                                str.append("ImageOps.binaryImageScalarOp(").append(((BinaryExpr) declaration.getExpr()).getOp().getKind().toString()).append(", ").append(((BinaryExpr) declaration.getExpr()).getLeft().getText()).append(", ").append(((BinaryExpr) declaration.getExpr()).getRight().getText());
+                                str.append(")");
+                            }
+                        } else if (declaration.getNameDef().getDim() != null) { //if image has an expression and has a dim
+                            if (declaration.getExpr().getType() == Types.Type.IMAGE) {
+                                str.append("ImageOps.resize(");
 //
-//                        str.append("ImageOps.resize(");
-////
-//                        str.append(declaration.getExpr().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getWidth().visit(this, arg)).append(", ");
-//                        str.append(declaration.getNameDef().getDim().getHeight().visit(this, arg));
-//                        str.append(")");
-//                    }else{
-//                        str.append("ImageOps.clone(").append(declaration.getExpr().visit(this, arg)).append(");\n");
-//                    }
-//
-//                }
-                if(declaration.getNameDef().getDim() == null && declaration.getExpr() instanceof BinaryExpr){
-                    if(declaration.getExpr().getType() == Types.Type.IMAGE) {
-                        str.append("ImageOps.clone(").append("ImageOps.binaryImageScalarOp(").append(((BinaryExpr) declaration.getExpr()).getOp().getKind().toString()).append(", ").append(((BinaryExpr) declaration.getExpr()).getLeft().getText()).append(", ").append(((BinaryExpr) declaration.getExpr()).getRight().getText());
-                        str.append(")").append(");\n");
+                                str.append(declaration.getExpr().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getWidth().visit(this, arg)).append(", ");
+                                str.append(declaration.getNameDef().getDim().getHeight().visit(this, arg));
+                                str.append(")");
+                            } else {
+                                str.append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getWidth().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getHeight().visit(this, arg)).append(");\n");
+                                str.append("FileURLIO.closeFiles()");
+                            }
 
-                    }
-                    else {
-                        str.append("ImageOps.binaryImageScalarOp(").append(((BinaryExpr) declaration.getExpr()).getOp().getKind().toString()).append(", ").append(((BinaryExpr) declaration.getExpr()).getLeft().getText()).append(", ").append(((BinaryExpr) declaration.getExpr()).getRight().getText());
-                        str.append(")");
-                    }
-                }
-                else if (declaration.getNameDef().getDim() != null) { //if image has an expression and has a dim
-                    if(declaration.getExpr().getType() == Types.Type.IMAGE){
-                        str.append("ImageOps.resize(");
-//
-                        str.append(declaration.getExpr().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getWidth().visit(this, arg)).append(", ");
-                        str.append(declaration.getNameDef().getDim().getHeight().visit(this, arg));
-                        str.append(")");
-                    }else{
-                        str.append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getWidth().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getHeight().visit(this, arg)).append(");\n");
-                        str.append("FileURLIO.closeFiles()");
-                    }
-
-                }
-                else if (declaration.getNameDef().getDim() == null) { //if image has an expression and does not have a dim
-                    if(declaration.getExpr().getType() == Types.Type.IMAGE) {
-                        str.append("ImageOps.clone(").append(declaration.getExpr().visit(this, arg)).append(");\n");
+                        } else if (declaration.getNameDef().getDim() == null) { //if image has an expression and does not have a dim
+                            if (declaration.getExpr().getType() == Types.Type.IMAGE) {
+                                str.append("ImageOps.clone(").append(declaration.getExpr().visit(this, arg)).append(");\n");
 //                        str.append("ImageOps.clone(").append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(")").append(");\n");
 
 
-                    }else{
-                        str.append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(")");
+                            } else {
+                                str.append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(")");
 
+                            }
+                        }
+                    } else { //not an image
+                        if (declaration.getExpr().getCoerceTo() != null) {
+                            str.append("(").append(declaration.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
+                        }
+                        str.append(declaration.getExpr().visit(this, arg));
+                    }
+                    str.append(";\n");
+                }else if(declaration.getOp()!= null && declaration.getOp().getKind() == IToken.Kind.LARROW){ //read stuff
+                    if(declaration.getDim() != null) {
+                        String w = declaration.getDim().getWidth().getText();
+                        String h = declaration.getDim().getHeight().getText();
+
+                        if (declaration.getType() == Types.Type.IMAGE) {
+                            str.append(" = ").append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg)).append(", ");
+                            str.append(w).append(", ").append(h).append(");\n");
+                        }
+                    }
+                    else{
+                        if (declaration.getType() == Types.Type.IMAGE) {
+                            str.append(" = ").append("FileURLIO.readImage(").append(declaration.getExpr().visit(this, arg));
+                            str.append(");\n");
+                        }
+                        else if(declaration.getExpr().getType() == Types.Type.STRING){
+                            str.append(" = ").append("(").append(declaration.getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(declaration.getExpr().visit(this, arg)).append(");\n");
+
+                        }
+                        else {
+                            str.append(" = ").append(declaration.getExpr().visit(this, arg)).append(";\n");
+                            //str.append(" = ").append("FileURLIO.getObjectInputStream(").append(declaration.getExpr().visit(this, arg)).append(");\n");
+
+                        }
                     }
                 }
-            }
-           else {
-                if (declaration.getExpr().getCoerceTo() != null) {
-                    str.append("(").append(declaration.getExpr().getCoerceTo().toString().toLowerCase(Locale.ROOT)).append(")");
-                }
-                str.append(declaration.getExpr().visit(this, arg));
-            }
-            str.append(";\n");
-        }else{
-            if (declaration.getNameDef().getType() == Types.Type.IMAGE) { //if is an image without an expression
-                if (declaration.getNameDef().getDim() != null) { // if is an image without an expression and with dim
-                    System.out.println("idk what this is: "+declaration.getNameDef().getDim().getWidth());
+            } else { //No expresssion
+                    if (declaration.getNameDef().getType() == Types.Type.IMAGE) { //if is an image without an expression
+                        if (declaration.getNameDef().getDim() != null) { // if is an image without an expression and with dim
+                            System.out.println("idk what this is: " + declaration.getNameDef().getDim().getWidth());
 
-                    str.append(" = new BufferedImage(").append(declaration.getNameDef().getDim().getWidth().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getHeight().visit(this, arg)).append(", ").append("BufferedImage.TYPE_INT_RGB)");
-                }else{
-                    //error
-                }
+                            str.append(" = new BufferedImage(").append(declaration.getNameDef().getDim().getWidth().visit(this, arg)).append(", ").append(declaration.getNameDef().getDim().getHeight().visit(this, arg)).append(", ").append("BufferedImage.TYPE_INT_RGB)");
+                        } else {
+                            //error
+                        }
+                    }
+                    str.append(";\n");
             }
-            str.append(";\n");
-        }
+
 
         return str.toString();
     }
