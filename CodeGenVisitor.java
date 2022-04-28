@@ -333,10 +333,10 @@ public class CodeGenVisitor implements ASTVisitor {
         if(writeStatement.getSource().getType() == Types.Type.IMAGE && writeStatement.getDest().getType() == Types.Type.CONSOLE){
             str.append("ConsoleIO.displayImageOnScreen(").append(writeStatement.getSource().visit(this, arg)).append(");\n");
         }
-        else if(writeStatement.getSource().getType() == Types.Type.IMAGE && writeStatement.getDest().getType() == Types.Type.STRING){
+        else if(writeStatement.getSource().getType() == Types.Type.IMAGE && writeStatement.getDest().getType() == Types.Type.STRING ){
             str.append("FileURLIO.writeImage(").append(writeStatement.getSource().visit(this, arg)).append(", ").append(writeStatement.getDest().getText()).append(");\n");
         }
-        else if(writeStatement.getSource().getType() == Types.Type.INT){
+        else if(writeStatement.getSource().getType() == Types.Type.INT || writeStatement.getSource().getType() == Types.Type.BOOLEAN || writeStatement.getSource().getType() == Types.Type.STRING || writeStatement.getSource().getType() == Types.Type.FLOAT){
             str.append("FileURLIO.writeValue(").append(writeStatement.getSource().visit(this, arg)).append(", ").append(writeStatement.getDest().visit(this, arg)).append(");\n");
         }
         if(writeStatement.getSource().getType() == Types.Type.STRING && writeStatement.getDest().getType() == Types.Type.CONSOLE){
@@ -413,10 +413,10 @@ public class CodeGenVisitor implements ASTVisitor {
                 str.append(readStatement.getName()).append(" = ").append("FileURLIO.readImage(").append(readStatement.getSource().visit(this, arg));
                 str.append(");\n");
             }
-//            else if(readStatement.getSource().getType() == Types.Type.STRING){
-//                str.append(" = ").append("(").append(readStatement.getTargetDec().getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(readStatement.getSource().visit(this, arg)).append(");\n");
-//
-//            }
+            else if(readStatement.getSource().getType() == Types.Type.STRING){
+                str.append(readStatement.getName()).append(" = ").append("(").append(readStatement.getTargetDec().getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(readStatement.getSource().visit(this, arg)).append(");\n");
+
+            }
             else {
                 //str.append(readStatement.getName()).append(" = ").append("(").append(readStatement.getTargetDec().getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(readStatement.getSource().visit(this, arg)).append(");\n");
                 str.append(readStatement.getName()).append(" = ").append(readStatement.getSource().visit(this, arg)).append(";\n");
@@ -569,8 +569,12 @@ public class CodeGenVisitor implements ASTVisitor {
                             str.append(");\n");
                         }
                         else if(declaration.getExpr().getType() == Types.Type.STRING){
-                            str.append(" = ").append("(").append(declaration.getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(declaration.getExpr().visit(this, arg)).append(");\n");
+                            if(declaration.getType() == Types.Type.STRING){
+                                str.append(" = ").append("(").append(formatType(declaration.getType().toString())).append(")").append("FileURLIO.readValueFromFile(").append(declaration.getExpr().visit(this, arg)).append(");\n");
 
+                            }else {
+                                str.append(" = ").append("(").append(declaration.getType().toString().toLowerCase()).append(")").append("FileURLIO.readValueFromFile(").append(declaration.getExpr().visit(this, arg)).append(");\n");
+                            }
                         }
                         else {
                             str.append(" = ").append(declaration.getExpr().visit(this, arg)).append(";\n");
